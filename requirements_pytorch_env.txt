@@ -1,0 +1,25 @@
+# This file may be used to create an environment using:
+# $ conda create --name <env> --file <this file>
+# platform: linux-64
+anndata=0.9.1
+#asteroid=0.5.2
+#comet-ml=3.32.8
+h5py=3.8.0
+mpl-scatter-density=0.7
+numpy=1.23.5
+pandas=1.5.3
+pytorch-gpu=2.0.0
+pytorch-lightning=1.9.4
+scipy=1.10.1
+seaborn=0.11.2
+tensorboard=2.14.1
+tensorboard-data-server=0.7.0
+tensorboard-plugin-wit=1.8.1
+#tensorboardx=2.6
+#torchaudio=2.0.1
+torchmetrics=0.11.4
+torchvision=0.14.1
+tqdm=4.65.0
+scanpy=1.9.3
+pyaml=21.10.1
+scikit-learn=1.2.2
