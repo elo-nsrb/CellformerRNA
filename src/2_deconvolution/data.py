@@ -13,7 +13,9 @@ import random
 SAMPLE_ID_TEST = "13_1226_SMTG"
 SAMPLE_ID_VAL = "13_0038_SMTG"
 MIXTUREFIX = "_100-800__pseudobulk_data.parquet.gzip"
+MIXTUREFIX = "_pseudobulk_data.parquet.gzip"
 SEPARATEFIX = "_100-800__celltype_specific.npz"
+SEPARATEFIX = "_celltype_specific.npz"
 class SeparationDataset(Dataset):
     def __init__(self,  mixtures,
             separate_signal, celltypes, hdf_dir, partition,
@@ -253,8 +255,6 @@ def normalizeMaxPeak(mixture, signals):
     max_val = np.max(mixture)
     mixture /= max_val
     signals /= max_val
-    mixture *= 1000
-    signals *= 1000
     return mixture, signals
 
 def logtransform(mixture, signals):

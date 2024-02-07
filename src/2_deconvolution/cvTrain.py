@@ -9,14 +9,14 @@ from utils import get_logger, parse, save_opt #device,
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import pandas as pd
 from pytorch_lightning import Trainer, seed_everything
-from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
 from schedulers import DPTNetScheduler
 import pytorch_lightning as pl
 from src_ssl.models import *
 import json
 import yaml
 from network import *
-from sklearn.model_selection import LeaveOneGroupOut, KFold
+from sklearn.model_selection import LeaveOneGroupOut, KFold, LeaveOneOut
 from losses import *
 from data import *
 import argparse
@@ -46,8 +46,10 @@ def main(args):
         kf.get_n_splits(list(set(list_ids)))
         list_splits = kf.split(list_ids)
     elif cv_func == "logo":
-        logo =  LeaveOneGroupOut()
-        if ((opt["datasets"]["name"] == "pbmc") & (opt["datasets"]["groupby"]=="Method")):
+        logo =  LeaveOneOut()
+        if (opt["datasets"]["groupby"]=="sample"):
+            list_splits = logo.split(list_ids)
+        elif ((opt["datasets"]["name"] == "pbmc") & (opt["datasets"]["groupby"]=="Method")):
             groups = [it.split("_")[1].split("_")[0] for it in list_ids]
             list_splits = logo.split(list_ids, groups=groups)
         elif (opt["datasets"]["name"] != "pbmc"):
@@ -138,21 +140,22 @@ def main(args):
                 optimizer = optim.AdamW(learnable_params, lr=1e-3)
                 # Define scheduler
                 scheduler = None
-                if args.model in ["DPTNet", "SepFormerTasNet", "SepFormer2TasNet"]:
-                    steps_per_epoch = len(train_loader) // opt["training"]["accumulate_grad_batches"]
-                    opt["scheduler"]["steps_per_epoch"] = steps_per_epoch
-                    scheduler = {
-                                "scheduler": DPTNetScheduler(
-                                optimizer=optimizer,
-                                steps_per_epoch=steps_per_epoch,
-                                 d_model=model.masker.mha_in_dim,
-                                 ),
-                                     "interval": "batch",
-                                    }
-                elif opt["training"]["reduce_on_plateau"]:
+                #if args.model in ["DPTNet", "SepFormerTasNet", "SepFormer2TasNet"]:
+                #    steps_per_epoch = len(train_loader) // opt["training"]["accumulate_grad_batches"]
+                #    opt["scheduler"]["steps_per_epoch"] = steps_per_epoch
+                #    scheduler = {
+                #                "scheduler": DPTNetScheduler(
+                #                optimizer=optimizer,
+                #                steps_per_epoch=steps_per_epoch,
+                #                 d_model=model.masker.mha_in_dim,
+                #                 ),
+                #                     "interval": "batch",
+                #                    }
+                #if opt["training"]["reduce_on_plateau"]:
+                if True:
                         scheduler = ReduceLROnPlateau(optimizer=optimizer,
                                                       factor=0.8,
-                                                      patience=opt["training"]["patience"]
+                                                      patience=2,
                                                       )
 
                 system = System(model, optimizer, loss, train_loader, val_loader,
@@ -180,7 +183,8 @@ def main(args):
                                         patience=opt["training"]["patience"],
                                         verbose=True,
                                         min_delta=0.0))
-
+                lr_monitor = LearningRateMonitor(logging_interval='step')
+                callbacks.append(lr_monitor)
                 loggers = []
                 tb_logger = pl.loggers.TensorBoardLogger(
                 os.path.join(args.model_path, "tb_logs/"),

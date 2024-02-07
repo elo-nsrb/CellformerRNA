@@ -148,7 +148,7 @@ class WeightedMSE(_Loss):
         #for it in range(pw_loss.shape[1]):
          #   print(str(it) + str(pw_loss[:,it].mean()))
 
-        return 100*pw_loss.mean()
+        return 100000*pw_loss.mean()
 
 class L1PearMSE_loss(nn.Module):
     def __init__(self,
@@ -171,7 +171,7 @@ class BCEMSE_loss(nn.Module):
         self.bce = nn.BCEWithLogitsLoss()
 
     def forward(self, x, target):
-        return self.mse(x,target) + self.bce(x,target)
+        return (self.mse(x,target)*1000 + self.bce(x,target))
 class PearsonMSE_loss(nn.Module):
     def __init__(self,
                 **kwargs):
