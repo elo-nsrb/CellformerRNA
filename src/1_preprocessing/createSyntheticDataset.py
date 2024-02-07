@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import anndata as ad
 import numpy as np
+import scanpy as sc
 import multiprocessing
 from joblib import Parallel, delayed
 import argparse
@@ -19,6 +20,8 @@ parser.add_argument('--nb_cores',
                 help="Number of cores",
                 default=20, type=int)
 parser.add_argument('--name', default="pseudobulks",
+                    help='Name pseudobulks data')
+parser.add_argument('--list_genes', default="./",
                     help='Name pseudobulks data')
 
 def createCellTypeFractionType(nb_celltypes):
@@ -277,12 +280,16 @@ def main():
     nb_cores = int(args.nb_cores)
     print(nb_cores)
     adata_ctrl = ad.read_h5ad(filename)
+    if "rosmap2" in name:
+        adata_ctrl.var["gene_symbol"] = adata_ctrl.var_names.values
     #adata_ctrl = adata_ctrl[adata_ctrl.obs.celltype.isin(allow_celltype)]
     adata_ = adata_ctrl
+    sc.pp.log1p(adata_)
+    
     name = args.name
     annot = adata_.var
     annot.to_csv(os.path.join(savepath , name + "_annotations.csv"))
-    celltypes = adata_.obs["celltype"].sort_values().unique().tolist()
+    celltypes = adata_.obs["celltype_map1"].sort_values().unique().tolist()
     #celltypes = ["AST", "ENDO", "EXC", "INH", "MIC", "Mural", "OLD", "OPC"]
     print(celltypes)
     mean_exp = adata_.X.mean(0)
