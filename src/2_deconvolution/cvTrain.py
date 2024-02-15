@@ -84,7 +84,6 @@ def main(args):
     for i, (train_id, test_id) in enumerate(list_splits):
         #if i>0:
                 s_id = np.asarray(list_ids)[test_id].tolist()
-                print(s_id)
                 opt = parse(os.path.join(parent_dir , "train.yml"), is_tain=True)
                 opt["datasets"]["sample_id_test"] = s_id
                 opt["datasets"]["sample_id_val"] = None

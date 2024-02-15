@@ -46,7 +46,6 @@ class SeparationDataset(Dataset):
         self.logtransform = logtransform
         self.level = level
         self.gene_filtering = gene_filtering
-        self.label = mixtures["Sample_num"].values
         os.makedirs(hdf_dir, exist_ok=True)
         self.celltypes = copy.deepcopy(celltypes)
 
@@ -118,6 +117,7 @@ class SeparationDataset(Dataset):
                 # Create folder if it did not exist before
             if not os.path.exists(hdf_dir):
                 os.makedirs(hdf_dir)
+            self.label = mixtures["Sample_num"].values
 
             # Create HDF file
             with h5py.File(self.hdf_dir, "w") as f:
@@ -302,12 +302,11 @@ def prepareData(partition,
         pure=False,
         limit=None,**kwargs):
     np.random.seed(seed=0)
-    print(sample_id_test)
     SP_test = sample_id_test
     if only_training:
         SP_test += "trainonly"
-    #if not os.path.isfile(os.path.join(hdf_dir, partition + ".hdf5")):
-    if True:
+    if not os.path.isfile(os.path.join(hdf_dir, partition + ".hdf5")):
+    #if True:
         mixture = pd.read_parquet(dataset_dir
                                 + name
                                 + MIXTUREFIX
@@ -446,7 +445,24 @@ def prepareData(partition,
                                     celltype_to_use=celltype_to_use,
                                     cut=cut,
                                    ratio=ratio_input)
-        return _data, annot#, test_data
+        return _data#, annot#, test_data
+    else:
+        _data = SeparationDataset(None,
+                                    None,
+                                    celltypes,
+                                    hdf_dir, 
+                                    partition,
+                                   data_transform=crop_func,
+                                   binarize=binarize,
+                                   binarize_input=binarize_input,
+                                   normalize=normalize,
+                                   normalizeMax=normalizeMax,
+                                   offset=offset_input,
+                                    celltype_to_use=celltype_to_use,
+                                            cut=cut,
+                                           ratio=ratio_input)
+        return _data
+
 
 
 def make_dataloader(partition,
@@ -462,7 +478,7 @@ def make_dataloader(partition,
                     only_training=False,
                     custom_testset=None,
                     ):
-        dataset, annot = prepareData(partition,
+        dataset = prepareData(partition,
                 **data_kwargs,
                 annot=annot)
         return DataLoader(dataset,
