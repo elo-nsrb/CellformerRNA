@@ -158,8 +158,8 @@ class SeparationDataset(Dataset):
         # Go through HDF and collect lengths of all audio files
         with h5py.File(self.hdf_dir, "r") as f:
             nb_sample = len(f)
-            lengths = [f[str(song_idx)].attrs[
-                    "target_length"] for song_idx in range(len(f))]
+            #lengths = [f[str(song_idx)].attrs[
+            #        "target_length"] for song_idx in range(len(f))]
 
             # Subtract input_size from lengths and divide by hop size to determine number of starting positions
            # lengths = [(l // self.shapes["output_frames"]) + 1 for l in lengths]
@@ -390,6 +390,11 @@ def prepareData(partition,
         if partition == "val":
             mixture_tt = mixture_val_tt
             separate_signal_tt = separate_signal_val_tt
+            mixture_train_tt = 0
+            separate_signal_train_tt = 0
+            mixture=0
+            separate_signals=0
+            
         elif partition == "test" and not use_train:
             mixture_tt = mixture[mixture["Sample_num"].isin(sample_test)]
             separate_signal_tt = separate_signals[
@@ -408,9 +413,19 @@ def prepareData(partition,
             #                + str(SP_test)
             #                + "n_separate_test.npz",
             #                mat=separate_signal_test_tt)
+            mixture_val_tt = 0
+            separate_signal_val_tt = 0
+            mixture_train_tt = 0
+            separate_signal_train_tt = 0
+            mixture=0
+            separate_signals=0
         else:
             mixture_tt = mixture_train_tt
             separate_signal_tt = separate_signal_train_tt
+            mixture_val_tt = 0
+            separate_signal_val_tt = 0
+            mixture=0
+            separate_signals=0
         len_train = len(mixture_tt)
         print("len %s: "%partition + str(len(mixture_tt)) )
         if "Unnamed: 0" in mixture_tt.columns.tolist():

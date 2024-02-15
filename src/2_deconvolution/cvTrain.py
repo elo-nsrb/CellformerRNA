@@ -41,37 +41,50 @@ def main(args):
     list_ids = list(set(list_ids))
     list_ids.sort()
     cv_func = opt["datasets"]["cv_func"]
+    groupby = opt["datasets"]["groupby"]
     if cv_func =="kfold":
         kf = KFold(n_splits=opt["datasets"]["k"], shuffle=True, random_state=23)
         kf.get_n_splits(list(set(list_ids)))
         list_splits = kf.split(list_ids)
     elif cv_func == "logo":
-        logo =  LeaveOneOut()
-        if (opt["datasets"]["groupby"]=="sample"):
+        if (groupby=="sample"):
+            logo =  LeaveOneOut()
             list_splits = logo.split(list_ids)
-        elif ((opt["datasets"]["name"] == "pbmc") & (opt["datasets"]["groupby"]=="Method")):
+        elif ((opt["datasets"]["name"] == "pbmc") & (groupby=="Method")):
+            logo =  LeaveOneGroupOut()
             groups = [it.split("_")[1].split("_")[0] for it in list_ids]
             list_splits = logo.split(list_ids, groups=groups)
         elif (opt["datasets"]["name"] != "pbmc"):
-            meta = pd.read_csv("/home/eloiseb/data/rna/pseudobulks_sum/cellinfo.csv")
-            meta["brain_region"] = meta["cell_id"].str.rsplit("_",
-                                            2, expand=True)[2]
-            mapping = {"MTG":"MTG", "CTX":"CTX", "PCTX":"CTX", "DLFC":"CTX",
-                    "Substantia nigra":"SubNI", "Cortex":"CTX", "DG":"DG","CA1":"CA1", "CA24":"CA24","EC":"EC", "SUB":"SUB", "amy":"AMY", "sacc":"SACC"}
-            meta["brain_region"] = meta["brain_region"].map(mapping).values
-            meta.drop("cell_type", axis=1, inplace=True)
-            meta.drop("cell_subtype", axis=1, inplace=True)
-            meta = meta[~meta.duplicated()]
-            meta = meta[meta.cell_id.isin(list_ids)]
-            meta["Diagnosis"] = meta["cell_id"].str.split("_", expand=True)[1]
-            groups = meta[opt["datasets"]["groupby"]].values.tolist()
-            list_ids = meta["cell_id"].values.tolist()
+            logo =  LeaveOneGroupOut()
+            list_diagnosis = [it.split("_")[1] for it in list_ids]
+            #meta = pd.read_csv("/home/eloiseb/data/rna/pseudobulks_sum/cellinfo.csv")
+            #meta["brain_region"] = meta["cell_id"].str.rsplit("_",
+            #                                2, expand=True)[2]
+            mapping = {"MTG":"SMTG", "NAC":"NAC", "SMTG":"SMTG", "MFG":"MFG", "CTX":"CTX", "PCTX":"CTX", "DLFC":"CTX",
+                    "SN":"SN", "Cortex":"CTX", "DG":"HIPP","CA1":"HIPP", "HIPP":"HIPP", "CA24":"HIPP","DLPFC":"DLPFC",
+                    "EC":"EC", "SUB":"HIPP", "AMY":"AMY", "SACC":"SACC"}
+            list_region = [mapping[it.split("_")[2]] for it in list_ids]
+            #meta["brain_region"] = meta["brain_region"].map(mapping).values
+            #meta.drop("cell_type", axis=1, inplace=True)
+            #meta.drop("cell_subtype", axis=1, inplace=True)
+            #meta = meta[~meta.duplicated()]
+            #meta = meta[meta.cell_id.isin(list_ids)]
+            #meta["Diagnosis"] = meta["cell_id"].str.split("_", expand=True)[1]
+            #groups = meta[opt["datasets"]["groupby"]].values.tolist()
+            if groupby == "Diagnosis":
+                groups = list_diagnosis
+
+            elif groupby=="Region":
+                groups=list_region
+            else:
+                raise NotImplemented("Please use Diagnosis or Region as a grouping variable")
             list_splits = logo.split(list_ids, groups=groups)
     else:
         raise "Cross validation function not implemented"
     for i, (train_id, test_id) in enumerate(list_splits):
         #if i>0:
                 s_id = np.asarray(list_ids)[test_id].tolist()
+                print(s_id)
                 opt = parse(os.path.join(parent_dir , "train.yml"), is_tain=True)
                 opt["datasets"]["sample_id_test"] = s_id
                 opt["datasets"]["sample_id_val"] = None
@@ -224,7 +237,7 @@ def main(args):
                             #resume_from_checkpoint=resume_from,
                                 #deterministic=True,
                         accelerator="gpu",
-                                devices=1,
+                                devices=2,
                                 )
                 trainer.fit(system, ckpt_path=resume_from)
 
