@@ -250,7 +250,7 @@ def normalizePeaks_signal(signals, mean_expression):
 
 def normalizeMaxPeak(mixture, signals):
     max_val = np.max(mixture)
-    if max_val>1e4:
+    if max_val>0:
         mixture /= max_val
         signals /= max_val
     return mixture, signals

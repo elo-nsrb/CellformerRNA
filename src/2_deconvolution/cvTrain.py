@@ -64,6 +64,7 @@ def main(args):
                     "SN":"SN", "Cortex":"CTX", "DG":"HIPP","CA1":"HIPP", "HIPP":"HIPP", "CA24":"HIPP","DLPFC":"DLPFC",
                     "EC":"EC", "SUB":"HIPP", "AMY":"AMY", "SACC":"SACC"}
             list_region = [mapping[it.split("_")[2]] for it in list_ids]
+            list_dataset = [it.split("_")[3] for it in list_ids]
             #meta["brain_region"] = meta["brain_region"].map(mapping).values
             #meta.drop("cell_type", axis=1, inplace=True)
             #meta.drop("cell_subtype", axis=1, inplace=True)
@@ -76,6 +77,8 @@ def main(args):
 
             elif groupby=="Region":
                 groups=list_region
+            elif groupby=="Dataset":
+                groups=list_dataset
             else:
                 raise NotImplemented("Please use Diagnosis or Region as a grouping variable")
             list_splits = logo.split(list_ids, groups=groups)
