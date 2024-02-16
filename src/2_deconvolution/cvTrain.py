@@ -227,7 +227,7 @@ def main(args):
                     resume_from = os.path.join(checkpoint_dir, args.resume_ckpt)
                 else:
                     resume_from = None
-                trainer = Trainer(max_epochs=opt["training"]["epochs"],
+                trainer = Trainer(max_epochs=opt["training"]["max_epochs"],
                                 #batch_size =opt["training"]["batch_size"],
                                 logger=loggers,
                                 callbacks=callbacks,
