@@ -69,10 +69,8 @@ class SeparationDataset(Dataset):
             self.hdf_dir = os.path.join(hdf_dir, partition + ".hdf5")
             self.level = len(self.celltypes)
         print(self.hdf_dir)
-        print(self.level)
         self.celltypes_to_use = celltype_to_use
         self.in_memory = in_memory
-        print(self.celltypes)
         if not self.gene_filtering is None:
                 mask = pd.read_csv(self.gene_filtering)
                 mask.set_index("celltype", inplace=True)
@@ -86,7 +84,6 @@ class SeparationDataset(Dataset):
              ) = gatherCelltypes(celltype_to_use,
                                             separate_signal, self.celltypes)
 
-            print(self.celltype)
             print(self.celltypes_to_use)
             if binarize:
                 separate_signal = binarizeSeparateSignal(separate_signal,
@@ -253,8 +250,9 @@ def normalizePeaks_signal(signals, mean_expression):
 
 def normalizeMaxPeak(mixture, signals):
     max_val = np.max(mixture)
-    mixture /= max_val
-    signals /= max_val
+    if max_val>1e4:
+        mixture /= max_val
+        signals /= max_val
     return mixture, signals
 
 def logtransform(mixture, signals):
@@ -306,7 +304,6 @@ def prepareData(partition,
     if only_training:
         SP_test += "trainonly"
     if not os.path.isfile(os.path.join(hdf_dir, partition + ".hdf5")):
-    #if True:
         mixture = pd.read_parquet(dataset_dir
                                 + name
                                 + MIXTUREFIX
@@ -492,21 +489,17 @@ def make_dataloader(partition,
 
 
 def gatherCelltypes(celltype_to_use, separate_signal, celltypes):
-    print(separate_signal.max())
     if celltype_to_use is not None:
         new_separate = np.zeros((separate_signal.shape[0],
                             len(celltype_to_use),
                              separate_signal.shape[2]))
         for ind,ct in enumerate(celltype_to_use):
-            print(ct)
             if ct =="Neurons" :
                 get_index = [i for i,it in enumerate(celltypes) if it in ["EX","INH"]]
                 tmp = separate_signal[:,get_index[0],:].copy()
                 for i in range(1, len(get_index)):
                     tmp += separate_signal[:,get_index[i],:]
-                print(celltypes)
                 new_separate[:,ind,:] = tmp.copy()
-                print(new_separate.max())
             elif ct=="OPCs-Oligo" :
                 get_index = [i for i,it in enumerate(celltypes) if it in ["OPCs","OLD"]]
                 tmp = separate_signal[:,get_index[0],:].copy()
@@ -530,9 +523,7 @@ def gatherCelltypes(celltype_to_use, separate_signal, celltypes):
                 tmp = separate_signal[:,get_index[0],:].copy()
                 for i in range(1, len(get_index)):
                     tmp += separate_signal[:,get_index[i],:]
-                print(celltypes)
                 new_separate[:,ind,:] = tmp.copy()
-                print(new_separate.max())
             else:
                 get_index = [i for i,it in enumerate(celltypes) if it in [ct]]
                 new_separate[:,ind,:] = separate_signal[:,get_index[0],:]

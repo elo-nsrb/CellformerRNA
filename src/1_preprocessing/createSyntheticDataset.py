@@ -21,7 +21,7 @@ parser.add_argument('--nb_cores',
                 default=20, type=int)
 parser.add_argument('--name', default="pseudobulks",
                     help='Name pseudobulks data')
-parser.add_argument('--list_genes', default="./",
+parser.add_argument('--list_genes', default=None,
                     help='Name pseudobulks data')
 
 def createCellTypeFractionType(nb_celltypes):
@@ -289,19 +289,23 @@ def main():
     nb_cores = int(args.nb_cores)
     print(nb_cores)
     adata_ctrl = ad.read_h5ad(filename)
-    list_genes = pd.read_csv(args.list_genes)["Gene"].tolist()
-    print(name)
     if "rosmap2" in name:
         adata_ctrl.var["gene_symbol"] = adata_ctrl.var_names.values
         nb_sparse=10
+        key = "celltype_map1"
+    elif "pbmc" in name:
+        nb_sparse=int(nb_cell_per_case/5)
+        key = "celltype"
     else:
         nb_sparse=int(nb_cell_per_case/5)
+        key = "celltype_map1"
     #adata_ctrl = adata_ctrl[adata_ctrl.obs.celltype.isin(allow_celltype)]
-    adata_ctrl = adata_ctrl[:, adata_ctrl.var["gene_symbol"].isin(list_genes)]
+    if args.list_genes is not None:
+        list_genes = pd.read_csv(args.list_genes)["Gene"].tolist()
+        adata_ctrl = adata_ctrl[:, adata_ctrl.var["gene_symbol"].isin(list_genes)]
     adata_ = adata_ctrl
     #adata_.obs.drop("celltype", axis=1, inplace=True)
     sc.pp.log1p(adata_)
-    key = "celltype_map1"
     print(adata_)
 
     annot = adata_.var

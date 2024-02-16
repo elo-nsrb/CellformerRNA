@@ -152,19 +152,19 @@ def main(args):
                 optimizer = optim.AdamW(learnable_params, lr=1e-3)
                 # Define scheduler
                 scheduler = None
-                #if args.model in ["DPTNet", "SepFormerTasNet", "SepFormer2TasNet"]:
-                #    steps_per_epoch = len(train_loader) // opt["training"]["accumulate_grad_batches"]
-                #    opt["scheduler"]["steps_per_epoch"] = steps_per_epoch
-                #    scheduler = {
-                #                "scheduler": DPTNetScheduler(
-                #                optimizer=optimizer,
-                #                steps_per_epoch=steps_per_epoch,
-                #                 d_model=model.masker.mha_in_dim,
-                #                 ),
-                #                     "interval": "batch",
-                #                    }
+                if args.model in ["DPTNet", "SepFormerTasNet", "SepFormer2TasNet"]:
+                    steps_per_epoch = len(train_loader) // opt["training"]["accumulate_grad_batches"]
+                    opt["scheduler"]["steps_per_epoch"] = steps_per_epoch
+                    scheduler = {
+                                "scheduler": DPTNetScheduler(
+                                optimizer=optimizer,
+                                steps_per_epoch=steps_per_epoch,
+                                 d_model=model.masker.mha_in_dim,
+                                 ),
+                                     "interval": "batch",
+                                    }
                 #if opt["training"]["reduce_on_plateau"]:
-                if True:
+                if False:
                         scheduler = ReduceLROnPlateau(optimizer=optimizer,
                                                       factor=0.8,
                                                       patience=2,
@@ -236,7 +236,7 @@ def main(args):
                             #resume_from_checkpoint=resume_from,
                                 #deterministic=True,
                         accelerator="gpu",
-                                devices=2,
+                                devices=1,
                                 )
                 trainer.fit(system, ckpt_path=resume_from)
 

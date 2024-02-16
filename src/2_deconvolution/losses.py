@@ -148,7 +148,7 @@ class WeightedMSE(_Loss):
         #for it in range(pw_loss.shape[1]):
          #   print(str(it) + str(pw_loss[:,it].mean()))
 
-        return 100000*pw_loss.mean()
+        return 1000*pw_loss.mean()
 
 class L1PearMSE_loss(nn.Module):
     def __init__(self,
