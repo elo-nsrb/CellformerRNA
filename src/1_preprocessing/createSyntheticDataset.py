@@ -37,7 +37,7 @@ def sampleDataset(data, labels, nb_to_samples,
                 sample_size, celltypes, with_sparse=False,
                 max_removed_celltypes=None,
                 only_sparse=False, pure=False,
-                nb_sparse=500,
+                nb_sparse=None,
                 random_num_cell=False):
     """
     Create synthetic cell type specific mixture
@@ -154,9 +154,9 @@ def createBulkSample(data, label,sample_size, celltypes, sparse=False,
 
 def loopPerSample(it,i, dataset, subjects, nb_genes, dir_path,
                         celltypes, key_celltype="celltype",
-                        nb_sample_per_subject=10000,sample_size=500,
+                        nb_sample_per_subject=1000,sample_size=None,
                         with_sparse=True, only_sparse=False, savename="",
-                        nb_sparse=500,
+                        nb_sparse=None,
                         pure=False):
     if not os.path.exists(dir_path
                             + savename
@@ -203,12 +203,13 @@ def createALLBulkDataset(dataset, nb_genes, dir_path,
                         celltypes,key_celltype,
                         save_per_samples=True,
                         nb_sample_per_subject=10000,
-                        sample_size=500,
+                        sample_size=None,
                         with_sparse=True,
                         nb_sparse=500,
                         only_sparse=False, savename="",
                         pure=False, num_cores=3):
 
+    print(nb_sparse)
 
     subjects = dataset.obs["Sample_num"].unique()
     if save_per_samples:
@@ -236,6 +237,7 @@ def createALLBulkDataset(dataset, nb_genes, dir_path,
                                             sample_size,
                                             celltypes,
                                             with_sparse=with_sparse,
+                                            nb_sparse=nb_sparse,
                                             pure=pure,
                                             only_sparse=only_sparse)
                 df_mix["Sample_num"] = it
@@ -250,6 +252,7 @@ def createALLBulkDataset(dataset, nb_genes, dir_path,
                                             celltypes,
                                             with_sparse=with_sparse,
                                             pure=pure,
+                                            nb_sparse=nb_sparse,
                                             only_sparse=only_sparse)
                 df_tmp["Sample_num"] = it
                 df_mix = pd.concat([df_mix, df_tmp], axis=0)
@@ -290,9 +293,9 @@ def main():
     print(name)
     if "rosmap2" in name:
         adata_ctrl.var["gene_symbol"] = adata_ctrl.var_names.values
-        nb_sparse=2
+        nb_sparse=10
     else:
-        nb_sparse=100
+        nb_sparse=int(nb_cell_per_case/5)
     #adata_ctrl = adata_ctrl[adata_ctrl.obs.celltype.isin(allow_celltype)]
     adata_ctrl = adata_ctrl[:, adata_ctrl.var["gene_symbol"].isin(list_genes)]
     adata_ = adata_ctrl
@@ -306,6 +309,8 @@ def main():
     celltypes = adata_.obs[key].sort_values().unique().tolist()
     #celltypes = ["AST", "ENDO", "EXC", "INH", "MIC", "Mural", "OLD", "OPC"]
     print(celltypes)
+    print(nb_cell_per_case)
+    print(nb_sparse)
     mean_exp = adata_.X.mean(0)
     np.save(os.path.join(savepath, name + "_mean_exp.npy"), mean_exp)
     df, df_lables, separate_signals = createALLBulkDataset(

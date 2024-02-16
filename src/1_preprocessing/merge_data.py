@@ -40,6 +40,7 @@ path_data = "/home/eloiseb/data/rna/adata_/"
 df_pseudo = []
 for it in list_dataset:
     pseudo = pd.read_parquet(os.path.join(path_data, it + suff_pseudo))
+    pseudo["Sample_num"] = pseudo["Sample_num"].astype(str) + "_" + it
     df_pseudo.append(pseudo)
 
 df_pseudo = pd.concat(df_pseudo)
