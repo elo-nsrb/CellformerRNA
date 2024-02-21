@@ -12,30 +12,24 @@ from pprint import pprint
 import torch.nn as nn
 
 import asteroid
-from asteroid.metrics import get_metrics
-from asteroid.data.librimix_dataset import LibriMix
-from asteroid.data.wsj0_mix import Wsj0mixDataset
-from asteroid.losses import PITLossWrapper, pairwise_neg_sisdr
 from asteroid.losses import *
 
 from asteroid.models import save_publishable
 from asteroid.utils import tensors_to_device
 
-from asteroid.models import DPRNNTasNet
-from my_data import make_dataloader,gatherCelltypes
+from data import make_dataloader,gatherCelltypes
 from sklearn.metrics import balanced_accuracy_score, roc_auc_score, roc_curve, f1_score
 from sklearn.metrics import auc,precision_recall_curve, r2_score
 from sklearn.metrics import mean_squared_error, r2_score
 from scipy.stats import pearsonr
 import seaborn as sns
 import pandas as pd
-from test_functions import *
 from utils import get_logger, parse #device,
 from src_ssl.models import *
 from src_ssl.models.sepformer_tasnet import SepFormerTasNet, SepFormer2TasNet
 import sys
 sys.path.append("../")
-from ML_models_brain_dataset import *
+from comparison_model import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--parent_dir', default='final.pth.tar',
@@ -70,11 +64,12 @@ def main(args):
     df_metrics_it_list = []
     df_metrics_genes_list = []
     gt_m = None
-    opt_p = parse(args.parent_dir + "train.yml", is_tain=True)
-    if not opt_p["datasets"]["gene_filtering"] is None:
-        print("masking")
-        mask = pd.read_csv(opt_p["datasets"]["gene_filtering"])
-        mask.set_index("celltype", inplace=True)
+    opt_p = parse(os.path.join(args.parent_dir, "train.yml"), is_tain=True)
+    if hasattr(opt_p["datasets"], "gene_filtering") :
+        if not opt_p["datasets"]["gene_filtering"] is None:
+            print("masking")
+            mask = pd.read_csv(opt_p["datasets"]["gene_filtering"])
+            mask.set_index("celltype", inplace=True)
     list_files = glob.glob(os.path.join(parent_dir, "exp_kfold_*"))
     for s_id in np.arange(len(list_files)):
     #if True:
@@ -177,9 +172,10 @@ def main(args):
                 separates = np.concatenate(separate_)
                 separates_pred = np.concatenate(separate_pred)
                # if not val_loader.dataset.gene_filtering is None:
-                if not opt_p["datasets"]["gene_filtering"] is None:
-                    separates = separates*mask.values[np.newaxis, :,:]
-                    separates_pred = separates_pred*mask.values[np.newaxis, :,:]
+                if hasattr(opt_p["datasets"], "gene_filtering") :
+                    if not opt_p["datasets"]["gene_filtering"] is None:
+                        separates = separates*mask.values[np.newaxis, :,:]
+                        separates_pred = separates_pred*mask.values[np.newaxis, :,:]
                 del model
                 torch.cuda.empty_cache()
                 name = args.testset + "_" + str(args.pure)
@@ -249,10 +245,11 @@ def main(args):
         df_metrics_sub_list.append(df_metrics_per_subject)
         df_metrics_it_list.append(df_metrics_per_it)
         df_metrics_genes_list.append(df_metrics_per_genes)
-    if not val_loader.dataset.gene_filtering is None:
-        args.parent_dir += "_with_filter_"
-        if not os.path.exists(args.parent_dir):
-            os.mkdir(args.parent_dir)
+    if hasattr(opt_p["datasets"], "gene_filtering") :
+        if not val_loader.dataset.gene_filtering is None:
+            args.parent_dir += "_with_filter_"
+            if not os.path.exists(args.parent_dir):
+                os.mkdir(args.parent_dir)
     df_metrics = pd.concat(df_metrics_it_list)
     df_metrics.to_csv(os.path.join(args.parent_dir,
                         "metrics_all_per_it.csv"),

@@ -64,7 +64,10 @@ def main(args):
                     "SN":"SN", "Cortex":"CTX", "DG":"HIPP","CA1":"HIPP", "HIPP":"HIPP", "CA24":"HIPP","DLPFC":"DLPFC",
                     "EC":"EC", "SUB":"HIPP", "AMY":"AMY", "SACC":"SACC"}
             list_region = [mapping[it.split("_")[2]] for it in list_ids]
-            list_dataset = [it.split("_")[3] for it in list_ids]
+            try:
+                list_dataset = [it.split("_")[3] for it in list_ids]
+            except:
+                print("Wrong Sample_num variable format ")
             #meta["brain_region"] = meta["brain_region"].map(mapping).values
             #meta.drop("cell_type", axis=1, inplace=True)
             #meta.drop("cell_subtype", axis=1, inplace=True)
@@ -86,6 +89,7 @@ def main(args):
         raise "Cross validation function not implemented"
     for i, (train_id, test_id) in enumerate(list_splits):
         #if i>0:
+            if (not opt["datasets"]["only_training"]) or (i==0):
                 s_id = np.asarray(list_ids)[test_id].tolist()
                 opt = parse(os.path.join(parent_dir , "train.yml"), is_tain=True)
                 opt["datasets"]["sample_id_test"] = s_id
@@ -241,7 +245,7 @@ def main(args):
                         accelerator="gpu",
                                 devices=1,
                                 )
-                trainer.fit(system, ckpt_path=resume_from)
+                trainer.fit(system)#, ckpt_path=resume_from)
 
                 best_k = {k: v.item() for k, v in checkpoint.best_k_models.items()}
                 with open(os.path.join(args.model_path, "best_k_models.json"), "w") as f:

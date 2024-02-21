@@ -390,7 +390,7 @@ def prepareData(partition,
             separate_signal_train_tt = 0
             mixture=0
             separate_signals=0
-            
+
         elif partition == "test" and not use_train:
             mixture_tt = mixture[mixture["Sample_num"].isin(sample_test)]
             separate_signal_tt = separate_signals[
@@ -447,7 +447,7 @@ def prepareData(partition,
         _data = SeparationDataset(None,
                                     None,
                                     celltypes,
-                                    hdf_dir, 
+                                    hdf_dir,
                                     partition,
                                    data_transform=crop_func,
                                    binarize=binarize,
