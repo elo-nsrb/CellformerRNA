@@ -125,7 +125,7 @@ class SeparationDataset(Dataset):
                 print("Adding atac-seq files to dataset (preprocessing)...")
                 real_idx = 0
                 for idx, (index, row) in enumerate(tqdm(self.mixtures.iterrows())):
-                            mix_cell = np.asarray(row[:-1]).reshape((1,-1)).astype(np.float)
+                            mix_cell = np.asarray(row[:-1]).reshape((1,-1)).astype("float32")
                             source_cells = []
                             #for j, source in enumerate(celltypes):
                             #    # In this case, read in cell and convert to target sampling rate
@@ -175,8 +175,8 @@ class SeparationDataset(Dataset):
             driver = "core" if self.in_memory else None  # Load HDF5 fully into memory if desired
             self.hdf_dataset = h5py.File(self.hdf_dir, 'r', driver=driver)
 
-        cell = self.hdf_dataset[str(index)]["inputs"][:,:].astype(np.float32)
-        targets = self.hdf_dataset[str(index)]["targets"][:,:].astype(np.float32)
+        cell = self.hdf_dataset[str(index)]["inputs"][:,:].astype("float32")
+        targets = self.hdf_dataset[str(index)]["targets"][:,:].astype("float32")
         if self.cut:
             targets[targets<=3] = 0
         #if self.celltypes_to_use is not None:
@@ -310,17 +310,6 @@ def prepareData(partition,
                                 )
 
         separate_signals = np.load(dataset_dir + name + SEPARATEFIX)["mat"]
-        if "promoter" in name:
-            mixture = filter_data(mixture, annot,
-                            key="chrom",value="chrX",type="mixture")
-            separate_signals = filter_data(separate_signals, annot,
-                            key="chrom",value="chrX",type="separate")
-            annot = annot[~(annot["chrom"] =="chrX")]
-            mixture = filter_data(mixture, annot,
-                            key="chrom",value="chrY",type="mixture")
-            separate_signals = filter_data(separate_signals, annot,
-                            key="chrom",value="chrY",type="separate")
-            annot = annot[~(annot["chrom"] =="chrY")]
         if only_training:
             sample_id_train = mixture["Sample_num"].unique()
             sample_id_val = sample_id_train
@@ -342,93 +331,52 @@ def prepareData(partition,
         sample_test = sample_id_test
         sample_val = sample_id_val
         sample_train = sample_id_train
-        if add_pure:
-            mixture_pure = pd.read_csv(dataset_dir
-                                        + name
-                        + "__pure__synthsize_bulk_data_with_sparse.csv",
-                        index_col=None)
-            separate_signals_pure = np.load(dataset_dir
-                                        + name
-                        + "__pure__concatenat_separate_signal.npz")["mat"]
-            mixture_train_tt = mixture[mixture["Sample_num"].isin(
-                                        sample_train)]
-            separate_signal_train_tt = separate_signals[
-                                            mixture["Sample_num"].isin(
-                                                        sample_train),:,:]
         if holdout:
             sample_train = sample_train + sample_val
 
-        mixture_train_tt = mixture[mixture["Sample_num"].isin(sample_train)]
-        separate_signal_train_tt = separate_signals[
-                                            mixture["Sample_num"].isin(
-                                                    sample_train),:,:]
-        if holdout:
-            n_val = int(cut_val*len(mixture_train_tt))
-            n_train = len(mixture_train_tt)-n_val
-            print("Hold out nval : %s"%str(n_val))
-            print("Hold out ntrain : %s"%str(n_train))
-            list_index = list(range(len(mixture_train_tt)))
-            random.Random(4).shuffle(list_index)
-            index_val = list_index[:n_val]
-            index_train = list_index[n_val:]
-            mixture_val_tt = mixture_train_tt.iloc[index_val,:]
-            separate_signal_val_tt = separate_signal_train_tt[
-                                                        index_val, :,:]
-            mixture_train_tt = mixture_train_tt.iloc[index_train,:]
-            separate_train_tt = separate_signal_train_tt[index_train, :,:]
-        else:
-
-            mixture_val_tt = mixture[mixture["Sample_num"].isin(sample_val)]
-            separate_signal_val_tt = separate_signals[
-                                    mixture["Sample_num"].isin(
-                                                        sample_val),:,:]
-
-        if partition == "val":
-            mixture_tt = mixture_val_tt
-            separate_signal_tt = separate_signal_val_tt
-            mixture_train_tt = 0
-            separate_signal_train_tt = 0
-            mixture=0
-            separate_signals=0
-
-        elif partition == "test" and not use_train:
-            mixture_tt = mixture[mixture["Sample_num"].isin(sample_test)]
-            separate_signal_tt = separate_signals[
+        if partition == "test" and not use_train:
+            separate_signals = separate_signals[
                                     mixture["Sample_num"].isin(
                                                         sample_test),:,:]
+            mixture = mixture[mixture["Sample_num"].isin(sample_test)]
             if limit is not None:
-                idd = np.random.randint(0,len(mixture_tt), limit)
-                mixture_tt = mixture_tt.iloc[idd]
-                separate_signal_test_tt = separate_signal_tt[idd]
-            #mixture_test_tt.to_hdf(dataset_dir
-             #                   + name
-             #                   + str(SP_test)
-             #                   + "n_mixture_test.h5", 'df')
-            #np.savez_compressed(dataset_dir
-            #                + name
-            #                + str(SP_test)
-            #                + "n_separate_test.npz",
-            #                mat=separate_signal_test_tt)
-            mixture_val_tt = 0
-            separate_signal_val_tt = 0
-            mixture_train_tt = 0
-            separate_signal_train_tt = 0
-            mixture=0
-            separate_signals=0
+                idd = np.random.randint(0,len(mixture), limit)
+                separate_signals = separate_signals[idd]
+                mixture = mixture.iloc[idd]
         else:
-            mixture_tt = mixture_train_tt
-            separate_signal_tt = separate_signal_train_tt
-            mixture_val_tt = 0
-            separate_signal_val_tt = 0
-            mixture=0
-            separate_signals=0
-        len_train = len(mixture_tt)
-        print("len %s: "%partition + str(len(mixture_tt)) )
-        if "Unnamed: 0" in mixture_tt.columns.tolist():
-            mixture_tt.drop("Unnamed: 0",axis=1, inplace=True)
+            separate_signals = separate_signals[
+                                                mixture["Sample_num"].isin(
+                                                        sample_train),:,:]
+            mixture = mixture[mixture["Sample_num"].isin(sample_train)]
+        if holdout:
+            n_val = int(cut_val*len(mixture))
+            n_train = len(mixture)-n_val
+            print("Hold out nval : %s"%str(n_val))
+            print("Hold out ntrain : %s"%str(n_train))
+            list_index = list(range(len(mixture)))
+            random.Random(4).shuffle(list_index)
+            if partition == "val":
+                index_val = list_index[:n_val]
+                mixture = mixture.iloc[index_val,:]
+                separate_signals = separate_signals[ index_val, :,:]
+            else:
+                index_train = list_index[n_val:]
+                mixture = mixture.iloc[index_train,:]
+                separate_signals = separate_signals[index_train, :,:]
+        else:
+            separate_signals = separate_signals[
+                                    mixture["Sample_num"].isin(
+                                                        sample_val),:,:]
+            mixture = mixture[mixture["Sample_num"].isin(sample_val)]
 
-        _data = SeparationDataset(mixture_tt,
-                               separate_signal_tt,
+
+        len_train = len(mixture)
+        print("len %s: "%partition + str(len(mixture)) )
+        if "Unnamed: 0" in mixture.columns.tolist():
+            mixture.drop("Unnamed: 0",axis=1, inplace=True)
+
+        _data = SeparationDataset(mixture,
+                               separate_signals,
                                 celltypes,
                                 hdf_dir,
                                 partition,
@@ -482,10 +430,6 @@ def make_dataloader(partition,
                         batch_size=batch_size,
                         shuffle=is_train,
                         num_workers=num_workers)
-    #return CellsDataLoader(dataset,
-    #                        is_train=is_train,
-    #                      segment_len=chunk_size,
-    #                  num_workers=num_workers)
 
 
 def gatherCelltypes(celltype_to_use, separate_signal, celltypes):

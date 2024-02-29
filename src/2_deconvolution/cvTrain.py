@@ -52,7 +52,7 @@ def main(args):
             list_splits = logo.split(list_ids)
         elif ((opt["datasets"]["name"] == "pbmc") & (groupby=="Method")):
             logo =  LeaveOneGroupOut()
-            groups = [it.split("_")[1].split("_")[0] for it in list_ids]
+            groups = [it.split("_")[1].split("_")[0].replace("10X", "10x").replace("inDrops", "Drop") for it in list_ids]
             list_splits = logo.split(list_ids, groups=groups)
         elif (opt["datasets"]["name"] != "pbmc"):
             logo =  LeaveOneGroupOut()
@@ -61,7 +61,7 @@ def main(args):
             #meta["brain_region"] = meta["cell_id"].str.rsplit("_",
             #                                2, expand=True)[2]
             mapping = {"MTG":"SMTG", "NAC":"NAC", "SMTG":"SMTG", "MFG":"MFG", "CTX":"CTX", "PCTX":"CTX", "DLFC":"CTX",
-                    "SN":"SN", "Cortex":"CTX", "DG":"HIPP","CA1":"HIPP", "HIPP":"HIPP", "CA24":"HIPP","DLPFC":"DLPFC",
+                    "SN":"SN", "Cortex":"CTX", "DG":"HIPP","CA1":"HIPP", "HIPP":"HIPP", "CA24":"HIPP","DLPFC":"CTX",
                     "EC":"EC", "SUB":"HIPP", "AMY":"AMY", "SACC":"SACC"}
             list_region = [mapping[it.split("_")[2]] for it in list_ids]
             #try:
@@ -89,7 +89,7 @@ def main(args):
     else:
         raise "Cross validation function not implemented"
     for i, (train_id, test_id) in enumerate(list_splits):
-        #if i>4:
+        #if (i<7) and (i>5):
             if (not opt["datasets"]["only_training"]) or (i==0):
                 s_id = np.asarray(list_ids)[test_id].tolist()
                 opt = parse(os.path.join(parent_dir , "train.yml"), is_tain=True)
@@ -241,12 +241,12 @@ def main(args):
                                 callbacks=callbacks,
                                 default_root_dir=args.model_path,
                         accumulate_grad_batches=opt[ "training"]["accumulate_grad_batches"],
-                            resume_from_checkpoint=resume_from,
+                            #resume_from_checkpoint=resume_from,
                                 #deterministic=True,
                         accelerator="gpu",
-                                devices=1,
+                                devices=3,
                                 )
-                trainer.fit(system)#, ckpt_path=resume_from)
+                trainer.fit(system, ckpt_path=resume_from)
 
                 best_k = {k: v.item() for k, v in checkpoint.best_k_models.items()}
                 with open(os.path.join(args.model_path, "best_k_models.json"), "w") as f:
