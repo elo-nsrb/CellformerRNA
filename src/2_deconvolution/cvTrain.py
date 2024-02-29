@@ -64,10 +64,11 @@ def main(args):
                     "SN":"SN", "Cortex":"CTX", "DG":"HIPP","CA1":"HIPP", "HIPP":"HIPP", "CA24":"HIPP","DLPFC":"DLPFC",
                     "EC":"EC", "SUB":"HIPP", "AMY":"AMY", "SACC":"SACC"}
             list_region = [mapping[it.split("_")[2]] for it in list_ids]
-            try:
+            #try:
+            if "berson" not in opt["datasets"]["name"]:
                 list_dataset = [it.split("_")[3] for it in list_ids]
-            except:
-                print("Wrong Sample_num variable format ")
+            #except:
+            #    print("Wrong Sample_num variable format ")
             #meta["brain_region"] = meta["brain_region"].map(mapping).values
             #meta.drop("cell_type", axis=1, inplace=True)
             #meta.drop("cell_subtype", axis=1, inplace=True)
@@ -88,7 +89,7 @@ def main(args):
     else:
         raise "Cross validation function not implemented"
     for i, (train_id, test_id) in enumerate(list_splits):
-        #if i>0:
+        #if i>4:
             if (not opt["datasets"]["only_training"]) or (i==0):
                 s_id = np.asarray(list_ids)[test_id].tolist()
                 opt = parse(os.path.join(parent_dir , "train.yml"), is_tain=True)
@@ -132,7 +133,7 @@ def main(args):
 
                 learnable_params = list(model.parameters())
                 if opt["training"]["loss"] == "mse":
-                    loss = nn.MSELoss()
+                    loss = MSEloss()
                 elif opt["training"]["loss"] == "mse_weighted":
                     #loss = nn.MSELoss()
                     loss = weightedloss(src=n_src, method="Uncertainty")
@@ -240,7 +241,7 @@ def main(args):
                                 callbacks=callbacks,
                                 default_root_dir=args.model_path,
                         accumulate_grad_batches=opt[ "training"]["accumulate_grad_batches"],
-                            #resume_from_checkpoint=resume_from,
+                            resume_from_checkpoint=resume_from,
                                 #deterministic=True,
                         accelerator="gpu",
                                 devices=1,

@@ -55,7 +55,7 @@ class FPPlusScMSEFunction(_Loss):
 
     def forward(self, est_targets, targets):
         mask = torch.clamp(targets.detach().copy(), min=0,max=1)
-        return 10*(1-mask)*self.mse(est_targets, targets) + self.mse(est_targets, targets) 
+        return 10*(1-mask)*self.mse(est_targets, targets) + self.mse(est_targets, targets)
 
 
 class CombinedPairwiseFunction(_Loss):
@@ -184,7 +184,7 @@ class PearsonMSE_loss(nn.Module):
         return self.mse(x,target) + self.pear(x,target)
 
 class MixteMSE(nn.Module):
-    def __init__(self, 
+    def __init__(self,
                 **kwargs):
         super(MixteMSE, self).__init__()
         self.mse = nn.MSELoss()
@@ -205,6 +205,14 @@ class MaskMSE(nn.Module):
     def forward(self, est_targets, targets):
         return self.mse(est_targets*self.m,targets*self.m)
 
+class MSEloss(nn.Module):
+    def __init__(self,
+                **kwargs
+                ):
+        super(MSEloss, self).__init__()
+        self.mse = nn.MSELoss()
+    def forward(self, est_targets, targets):
+        return self.mse(est_targets,targets)*100000
 singlesrc_bcewithlogit = SingleSrcBCEWithLogit()
 combinedpairwiseloss = CombinedPairwiseFunction()
 combinedsingleloss = CombinedSingleFunction()
