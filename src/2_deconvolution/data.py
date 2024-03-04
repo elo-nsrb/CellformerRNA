@@ -312,8 +312,9 @@ def prepareData(partition,
         separate_signals = np.load(dataset_dir + name + SEPARATEFIX)["mat"]
         if only_training:
             sample_id_train = mixture["Sample_num"].unique()
-            sample_id_val = sample_id_train
+            sample_id_val = [] #sample_id_train
             sample_id_test = sample_id_train
+            print("sample train :" +  str(sample_id_train))
 
         else:
 
@@ -332,7 +333,8 @@ def prepareData(partition,
         sample_val = sample_id_val
         sample_train = sample_id_train
         if holdout:
-            sample_train = sample_train + sample_val
+            if not only_training:
+                sample_train = sample_train + sample_val
 
         if partition == "test" and not use_train:
             separate_signals = separate_signals[
