@@ -73,7 +73,10 @@ class SeparationDataset(Dataset):
         self.in_memory = in_memory
         if not self.gene_filtering is None:
                 mask = pd.read_csv(self.gene_filtering)
-                mask.set_index("celltype", inplace=True)
+                if "celltype" in mask.columns.tolist():
+                    mask.set_index("celltype", inplace=True)
+                else:
+                    mask.set_index("celltype_map1", inplace=True)
                 self.mask = mask
 
         if not os.path.exists(self.hdf_dir) or force_rewriting:

@@ -291,13 +291,13 @@ def main():
     adata_ctrl = ad.read_h5ad(filename)
     if "rosmap2" in name:
         adata_ctrl.var["gene_symbol"] = adata_ctrl.var_names.values
-        nb_sparse=10
+        nb_sparse=2
         key = "celltype_map1"
     elif "pbmc" in name:
         nb_sparse=int(nb_cell_per_case/5)
         key = "celltype"
     else:
-        nb_sparse=int(nb_cell_per_case/5)
+        nb_sparse=int(nb_cell_per_case/10)
         key = "celltype_map1"
     #adata_ctrl = adata_ctrl[adata_ctrl.obs.celltype.isin(allow_celltype)]
     if args.list_genes is not None:
@@ -305,11 +305,12 @@ def main():
         adata_ctrl = adata_ctrl[:, adata_ctrl.var["gene_symbol"].isin(list_genes)]
     adata_ = adata_ctrl
     #adata_.obs.drop("celltype", axis=1, inplace=True)
-   #` sc.pp.log1p(adata_)
+    #sc.pp.log1p(adata_)
     print(adata_)
 
     annot = adata_.var
     annot.to_csv(os.path.join(savepath , name + "_annotations.csv"))
+    adata_ = adata_[~adata_.obs[key].isna()]
     celltypes = adata_.obs[key].sort_values().unique().tolist()
     #celltypes = ["AST", "ENDO", "EXC", "INH", "MIC", "Mural", "OLD", "OPC"]
     print(celltypes)

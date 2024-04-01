@@ -22,20 +22,22 @@ parser.add_argument('--list_genes', default="./",
 
 #def main():
 
-list_dataset = ["abi_mtg",
+list_dataset = ["abi_mtg_7",
                 #"abi_ctx",
-                "rosmap2_f5",
-                "berson",
-                "mathys",
+                "rosmap2_f5_7",
+                "berson_7",
+                "mathys_7",
                 #"rosemap",
-                "agarwal",
-                "franjic",
-                "tran"]
+                "agarwal_7",
+                "franjic_7",
+                "tran_7"]
 
+name = "_small_7"
 suff_pseudo = "_pseudobulk_data.parquet.gzip"
 suff_ct_spe = "_celltype_specific.npz"
 suff_annotations = "_annotations.csv"
 path_data = "/home/eloiseb/data/rna/adata_/"
+save_path_data = "/home/eloiseb/home_nalab6/data/rna/adata_/"
 
 df_pseudo = []
 for it in list_dataset:
@@ -48,7 +50,7 @@ list_samples = df_pseudo["Sample_num"].unique().tolist()
 with open(os.path.join(path_data, "pseudobulks_list_samples.txt"), "w") as f:
     for it in list_samples:
         f.write("%s\n"%str(it))
-df_pseudo.to_parquet(os.path.join(path_data, "pseudobulks" + suff_pseudo), index=None, compression="gzip")
+df_pseudo.to_parquet(os.path.join(save_path_data, "pseudobulks" +name+ suff_pseudo), index=None, compression="gzip")
 df_pseudo = 0
 
 df_pseudo = []
@@ -61,7 +63,7 @@ for it in list_dataset:
     df_pseudo.append(pseudo)
 pseudo = np.concatenate(df_pseudo,axis=0)
 print(pseudo.shape)
-np.savez_compressed(os.path.join(path_data, "pseudobulks" + suff_ct_spe),
+np.savez_compressed(os.path.join(save_path_data, "pseudobulks" +name+ suff_ct_spe),
                     mat=pseudo)##66000
 pseudo=0
 

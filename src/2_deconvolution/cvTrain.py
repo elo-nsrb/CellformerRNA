@@ -65,7 +65,7 @@ def main(args):
                     "EC":"EC", "SUB":"HIPP", "AMY":"AMY", "SACC":"SACC"}
             list_region = [mapping[it.split("_")[2]] for it in list_ids]
             #try:
-            if "berson" not in opt["datasets"]["name"]:
+            if not opt["datasets"]["name"] in ["berson", "our_only_all"]:
                 list_dataset = [it.split("_")[3] for it in list_ids]
             #except:
             #    print("Wrong Sample_num variable format ")
@@ -90,8 +90,7 @@ def main(args):
         raise "Cross validation function not implemented"
     for i, (train_id, test_id) in enumerate(list_splits):
         #if (i<7) and (i>5):
-        #if (i<2) and (i>0):
-        #if (i>1):
+        #if i>1:
             if (not opt["datasets"]["only_training"]) or (i==0):
                 s_id = np.asarray(list_ids)[test_id].tolist()
                 opt = parse(os.path.join(parent_dir , "train.yml"), is_tain=True)
@@ -243,12 +242,12 @@ def main(args):
                                 callbacks=callbacks,
                                 default_root_dir=args.model_path,
                         accumulate_grad_batches=opt[ "training"]["accumulate_grad_batches"],
-                            #resume_from_checkpoint=resume_from,
+                            resume_from_checkpoint=resume_from,
                                 #deterministic=True,
                         accelerator="gpu",
-                                devices=4,
+                                devices=1,
                                 )
-                trainer.fit(system, ckpt_path=resume_from)
+                trainer.fit(system)#, ckpt_path=resume_from)
 
                 best_k = {k: v.item() for k, v in checkpoint.best_k_models.items()}
                 with open(os.path.join(args.model_path, "best_k_models.json"), "w") as f:

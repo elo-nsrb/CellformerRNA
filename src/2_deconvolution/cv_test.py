@@ -73,7 +73,7 @@ def main(args):
     list_files = glob.glob(os.path.join(parent_dir, "exp_kfold_*"))
     for s_id in np.arange(len(list_files)):
     #if True:
-     #   s_id = 9
+        #s_id=2
         args.model_path = os.path.join(parent_dir,
                                     "exp_kfold_%s/"%(s_id))
         print(args.model_path)
