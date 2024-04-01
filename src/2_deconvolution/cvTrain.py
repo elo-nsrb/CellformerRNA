@@ -1,5 +1,5 @@
 #steroid is based on PyTorch and PyTorch-Lightning.
-import comet_ml
+#import comet_ml
 import torch
 import torch.nn as nn
 import asteroid
@@ -90,6 +90,8 @@ def main(args):
         raise "Cross validation function not implemented"
     for i, (train_id, test_id) in enumerate(list_splits):
         #if (i<7) and (i>5):
+        #if (i<2) and (i>0):
+        #if (i>1):
             if (not opt["datasets"]["only_training"]) or (i==0):
                 s_id = np.asarray(list_ids)[test_id].tolist()
                 opt = parse(os.path.join(parent_dir , "train.yml"), is_tain=True)
@@ -244,7 +246,7 @@ def main(args):
                             #resume_from_checkpoint=resume_from,
                                 #deterministic=True,
                         accelerator="gpu",
-                                devices=3,
+                                devices=4,
                                 )
                 trainer.fit(system, ckpt_path=resume_from)
 
@@ -268,6 +270,8 @@ def main(args):
                 os.remove(os.path.join(opt['datasets']["hdf_dir"],
                                 "val.hdf5"))
                 torch.cuda.empty_cache()
+                if args.resume:
+                    args.resume = False
                 del system
                 del trainer
 

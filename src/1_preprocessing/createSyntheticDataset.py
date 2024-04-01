@@ -305,7 +305,7 @@ def main():
         adata_ctrl = adata_ctrl[:, adata_ctrl.var["gene_symbol"].isin(list_genes)]
     adata_ = adata_ctrl
     #adata_.obs.drop("celltype", axis=1, inplace=True)
-    sc.pp.log1p(adata_)
+   #` sc.pp.log1p(adata_)
     print(adata_)
 
     annot = adata_.var

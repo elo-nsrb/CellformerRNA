@@ -203,7 +203,7 @@ class MaskMSE(nn.Module):
         self.mse = nn.MSELoss()
         self.register_buffer("m", self.mask)
     def forward(self, est_targets, targets):
-        return self.mse(est_targets*self.m,targets*self.m)
+        return 100000*self.mse(est_targets*self.m,targets*self.m)
 
 class MSEloss(nn.Module):
     def __init__(self,

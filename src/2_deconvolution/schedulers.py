@@ -34,6 +34,9 @@ class BaseScheduler(object):
         lr = self._get_lr()
         self._set_lr(lr)
 
+    def lr_scheduler_step(self,scheduler, *args,**kwargs):
+        scheduler.step()
+
     def load_state_dict(self, state_dict):
         self.__dict__.update(state_dict)
 
