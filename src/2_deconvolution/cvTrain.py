@@ -61,9 +61,11 @@ def main(args):
             #meta["brain_region"] = meta["cell_id"].str.rsplit("_",
             #                                2, expand=True)[2]
             mapping = {"MTG":"SMTG", "NAC":"NAC", "SMTG":"SMTG", "MFG":"MFG", "CTX":"CTX", "PCTX":"CTX", "DLFC":"CTX",
-                    "SN":"SN", "Cortex":"CTX", "DG":"HIPP","CA1":"HIPP", "HIPP":"HIPP", "CA24":"HIPP","DLPFC":"CTX",
+                    "SN":"SN", "CORTEX":"CTX", "DG":"HIPP","CA1":"HIPP", "HIPP":"HIPP", "CA24":"HIPP","DLPFC":"CTX",
+                    "SUBSTANTIA NIGRA":"SN", "amy":"AMY", "HPC":"HIPP",
                     "EC":"EC", "SUB":"HIPP", "AMY":"AMY", "SACC":"SACC"}
-            list_region = [mapping[it.split("_")[2]] for it in list_ids]
+            list_region = [mapping[it.split("_")[2].upper()] for it in list_ids]
+            __import__('ipdb').set_trace()
             #try:
             if not opt["datasets"]["name"] in ["berson", "our_only_all"]:
                 list_dataset = [it.split("_")[3] for it in list_ids]
@@ -90,7 +92,7 @@ def main(args):
         raise "Cross validation function not implemented"
     for i, (train_id, test_id) in enumerate(list_splits):
         #if (i<7) and (i>5):
-        #if i>1:
+        #if i>0:
             if (not opt["datasets"]["only_training"]) or (i==0):
                 s_id = np.asarray(list_ids)[test_id].tolist()
                 opt = parse(os.path.join(parent_dir , "train.yml"), is_tain=True)
