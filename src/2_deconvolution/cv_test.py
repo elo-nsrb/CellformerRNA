@@ -86,7 +86,8 @@ def main(args):
                     args.ckpt_path.split("/")[-1].split(".")[0])
         if not os.path.exists(savedir):
             os.mkdir(savedir)
-        if not os.path.exists(os.path.join(savedir, "metrics_per_genes.csv")):
+        if True:
+        #if not os.path.exists(os.path.join(savedir, "metrics_per_genes.csv")):
             opt = parse(args.model_path + "train.yml", is_tain=True)
             celltypes = opt["datasets"]["celltype_to_use"]
             num_spk = len(celltypes)
@@ -130,7 +131,7 @@ def main(args):
                                      is_train=False,
                                         data_kwargs=opt['datasets'],
                                         num_workers=opt['datasets'] ['num_workers'],
-                                           batch_size=opt['training']["batch_size"],
+                               batch_size=opt["training"]["batch_size"],
                                            limit=limit,
                                            use_train=use_train,
                                            custom_testset=args.custom_testset,
@@ -167,7 +168,7 @@ def main(args):
                         mixture_.append(mix_np)
                         separate_.append(sources_np)
                         separate_pred.append(est_sources_np)
-                        label_.append(label)
+                        label_+=label
                 mixtures = np.concatenate(mixture_)
                 separates = np.concatenate(separate_)
                 separates_pred = np.concatenate(separate_pred)
@@ -234,13 +235,13 @@ def main(args):
                                 celltypes,
                                 list(np.arange(separates.shape[-1])))
             df_metrics_per_genes["fold"] = "fold_%s"%str(s_id)
-            df_metrics_per_subject.to_csv(os.path.join(savedir, "metrics_per_subjects.csv"))
-            df_metrics_per_it.to_csv(os.path.join(savedir, "metrics_per_it.csv"))
-            df_metrics_per_genes.to_csv(os.path.join(savedir, "metrics_per_genes.csv"))
+            df_metrics_per_subject.to_csv(os.path.join(savedir, "metrics_subjects.csv"))
+            df_metrics_per_it.to_csv(os.path.join(savedir, "metrics_it.csv"))
+            df_metrics_per_genes.to_csv(os.path.join(savedir, "metrics_genes.csv"))
         else:
-            df_metrics_per_subject= pd.read_csv(os.path.join(savedir, "metrics_per_subjects.csv"))
-            df_metrics_per_it = pd.read_csv(os.path.join(savedir, "metrics_per_it.csv"))
-            df_metrics_per_genes = pd.read_csv(os.path.join(savedir, "metrics_per_genes.csv"))
+            df_metrics_per_subject= pd.read_csv(os.path.join(savedir, "metrics_subjects.csv"))
+            df_metrics_per_it = pd.read_csv(os.path.join(savedir, "metrics_it.csv"))
+            df_metrics_per_genes = pd.read_csv(os.path.join(savedir, "metrics_genes.csv"))
 
         df_metrics_sub_list.append(df_metrics_per_subject)
         df_metrics_it_list.append(df_metrics_per_it)
