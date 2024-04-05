@@ -73,7 +73,7 @@ def main(args):
     list_files = glob.glob(os.path.join(parent_dir, "exp_kfold_*"))
     for s_id in np.arange(len(list_files)):
     #if True:
-        #s_id=2
+    #    s_id=2
         args.model_path = os.path.join(parent_dir,
                                     "exp_kfold_%s/"%(s_id))
         print(args.model_path)
@@ -87,7 +87,7 @@ def main(args):
         if not os.path.exists(savedir):
             os.mkdir(savedir)
         #if True:
-        if not os.path.exists(os.path.join(savedir, "metrics_genes.csv")):
+        if not os.path.exists(os.path.join(savedir, "metrics_all_genes.csv")):
             opt = parse(args.model_path + "train.yml", is_tain=True)
             celltypes = opt["datasets"]["celltype_to_use"]
             num_spk = len(celltypes)
@@ -253,15 +253,15 @@ def main(args):
                 os.mkdir(args.parent_dir)
     df_metrics = pd.concat(df_metrics_it_list)
     df_metrics.to_csv(os.path.join(args.parent_dir,
-                        "metrics_all_per_it.csv"),
+                        "metrics_all_it.csv"),
                     index=None)
     df_metrics = pd.concat(df_metrics_sub_list)
     df_metrics.to_csv(os.path.join(args.parent_dir,
-                        "metrics_all_per_sub.csv"),
+                        "metrics_all_sub.csv"),
                     index=None)
     df_metrics = pd.concat(df_metrics_genes_list)
     df_metrics.to_csv(os.path.join(args.parent_dir,
-                        "metrics_all_per_genes.csv"),
+                        "metrics_all_genes.csv"),
                     index=None)
     __import__('ipdb').set_trace()
 
