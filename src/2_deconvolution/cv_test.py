@@ -87,7 +87,7 @@ def main(args):
         if not os.path.exists(savedir):
             os.mkdir(savedir)
         #if True:
-        if not os.path.exists(os.path.join(savedir, "metrics_all_genes.csv")):
+        if not os.path.exists(os.path.join(savedir, "metrics_genes.csv")):
             opt = parse(args.model_path + "train.yml", is_tain=True)
             celltypes = opt["datasets"]["celltype_to_use"]
             num_spk = len(celltypes)
