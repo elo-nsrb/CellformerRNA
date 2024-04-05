@@ -296,6 +296,9 @@ def main():
     elif "pbmc" in name:
         nb_sparse=int(nb_cell_per_case/5)
         key = "celltype"
+        celltype = ['B cell', 'CD4+ T cell', 'CD14+ monocyte', 'CD16+ monocyte',
+                       'Cytotoxic T cell', 'Dendritic cell', 'Megakaryocyte']
+        adata_ctrl = adata_ctrl[adata_ctrl.obs["celltype"].isin(celltype)]
     else:
         nb_sparse=int(nb_cell_per_case/10)
         key = "celltype_map1"
@@ -305,7 +308,9 @@ def main():
         adata_ctrl = adata_ctrl[:, adata_ctrl.var["gene_symbol"].isin(list_genes)]
     adata_ = adata_ctrl
     #adata_.obs.drop("celltype", axis=1, inplace=True)
-    #sc.pp.log1p(adata_)
+    if "lognorm" in name:
+        print("log norm data")
+        sc.pp.log1p(adata_)
     print(adata_)
 
     annot = adata_.var

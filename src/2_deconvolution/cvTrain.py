@@ -50,11 +50,11 @@ def main(args):
         if (groupby=="sample"):
             logo =  LeaveOneOut()
             list_splits = logo.split(list_ids)
-        elif ((opt["datasets"]["name"] == "pbmc") & (groupby=="Method")):
+        elif (("pbmc" in opt["datasets"]["name"]) & (groupby=="Method")):
             logo =  LeaveOneGroupOut()
             groups = [it.split("_")[1].split("_")[0].replace("10X", "10x").replace("inDrops", "Drop") for it in list_ids]
             list_splits = logo.split(list_ids, groups=groups)
-        elif (opt["datasets"]["name"] != "pbmc"):
+        elif ("pbmc" not in opt["datasets"]["name"]):
             logo =  LeaveOneGroupOut()
             list_diagnosis = [it.split("_")[1] for it in list_ids]
             #meta = pd.read_csv("/home/eloiseb/data/rna/pseudobulks_sum/cellinfo.csv")
@@ -65,7 +65,6 @@ def main(args):
                     "SUBSTANTIA NIGRA":"SN", "amy":"AMY", "HPC":"HIPP",
                     "EC":"EC", "SUB":"HIPP", "AMY":"AMY", "SACC":"SACC"}
             list_region = [mapping[it.split("_")[2].upper()] for it in list_ids]
-            __import__('ipdb').set_trace()
             #try:
             if not opt["datasets"]["name"] in ["berson", "our_only_all"]:
                 list_dataset = [it.split("_")[3] for it in list_ids]
@@ -92,7 +91,7 @@ def main(args):
         raise "Cross validation function not implemented"
     for i, (train_id, test_id) in enumerate(list_splits):
         #if (i<7) and (i>5):
-        #if i>0:
+        #if i>5:
             if (not opt["datasets"]["only_training"]) or (i==0):
                 s_id = np.asarray(list_ids)[test_id].tolist()
                 opt = parse(os.path.join(parent_dir , "train.yml"), is_tain=True)
@@ -247,7 +246,7 @@ def main(args):
                             resume_from_checkpoint=resume_from,
                                 #deterministic=True,
                         accelerator="gpu",
-                                devices=1,
+                                devices=3,
                                 )
                 trainer.fit(system)#, ckpt_path=resume_from)
 

@@ -22,7 +22,8 @@ parser.add_argument('--list_genes', default="./",
 
 #def main():
 
-list_dataset = ["abi_mtg_7",
+list_dataset = ["abi_mtg_ad_7",
+                "abi_mtg_ctl_7",
                 #"abi_ctx",
                 "rosmap2_f5_7",
                 "berson_7",
@@ -37,7 +38,7 @@ suff_pseudo = "_pseudobulk_data.parquet.gzip"
 suff_ct_spe = "_celltype_specific.npz"
 suff_annotations = "_annotations.csv"
 path_data = "/home/eloiseb/data/rna/adata_/"
-save_path_data = "/home/eloiseb/home_nalab6/data/rna/adata_/"
+save_path_data = "/home/eloiseb/data/rna/adata_/"
 
 df_pseudo = []
 for it in list_dataset:

@@ -86,8 +86,8 @@ def main(args):
                     args.ckpt_path.split("/")[-1].split(".")[0])
         if not os.path.exists(savedir):
             os.mkdir(savedir)
-        if True:
-        #if not os.path.exists(os.path.join(savedir, "metrics_per_genes.csv")):
+        #if True:
+        if not os.path.exists(os.path.join(savedir, "metrics_genes.csv")):
             opt = parse(args.model_path + "train.yml", is_tain=True)
             celltypes = opt["datasets"]["celltype_to_use"]
             num_spk = len(celltypes)
@@ -168,7 +168,7 @@ def main(args):
                         mixture_.append(mix_np)
                         separate_.append(sources_np)
                         separate_pred.append(est_sources_np)
-                        label_+=label
+                        label_ += label
                 mixtures = np.concatenate(mixture_)
                 separates = np.concatenate(separate_)
                 separates_pred = np.concatenate(separate_pred)

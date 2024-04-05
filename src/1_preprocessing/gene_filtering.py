@@ -22,7 +22,8 @@ parser.add_argument('-sp', '--savepath',
 
 
 
-def createMask(list_dataset, celltypes, savepath, threshold = 0.01, key="celltype"):
+def createMask(list_dataset, celltypes, savepath, threshold = 0.01, 
+        key="celltype", name=""):
     list_tot=[]
     list_sum=[]
     #celltypes = ["AST", "ENDO", "EXC", "INH", "MIC", "Mural", "OLD", "OPC"]
@@ -53,7 +54,7 @@ def createMask(list_dataset, celltypes, savepath, threshold = 0.01, key="celltyp
     mm = mm.loc[celltypes,:].astype("float")
     mm[mm.values<threshold] = 0
     mm[mm.values>=threshold] = 1
-    mm.to_csv(os.path.join(savepath, "mask_thrs_%s.csv"%str(threshold)))
+    mm.to_csv(os.path.join(savepath, name + "mask_thrs_%s.csv"%str(threshold)))
     print("Mask saved as %s"%os.path.join(savepath,
                 "mask_thrs_%s.csv"%str(threshold)))
     return mm
@@ -61,13 +62,15 @@ def main():
     args = parser.parse_args()
     list_dataset = [item for item in args.list_data.split(',')]
     celltypes = [item for item in args.celltypes.split(',')]
-    #list_dataset = ["/home/eloiseb/data/rna/rna_pbmc/adata_peak_matrix_ding_pbmc.h5ad"]
-    #celltypes = ["B cell","CD4+ T cell","CD14+ monocyte","CD16+ monocyte", "Cytotoxic T cell", "Dendritic cell", "Megakaryocyte", "Natural killer cell", "Plasmacytoid dendritic cell"]
+    list_dataset = ["/home/eloiseb/data/rna/rna_pbmc/adata_peak_matrix_ding_pbmc.h5ad"]
+    celltypes = ["B cell","CD4+ T cell","CD14+ monocyte","CD16+ monocyte", "Cytotoxic T cell", "Dendritic cell", "Megakaryocyte"]#, "Natural killer cell", "Plasmacytoid dendritic cell"]
     savepath = args.savepath
-    #savepath = "/home/eloiseb/data/rna/rna_pbmc/"
+    savepath = "/home/eloiseb/data/rna/rna_pbmc/"
     thres = args.threshold
     key = "celltype_map1"
-    createMask(list_dataset, celltypes, savepath, threshold = 0.01, key=key)
+    key= "celltype"
+    createMask(list_dataset, celltypes, savepath, 
+            threshold = 0.01, key=key, name="7_")
 
 if __name__ == "__main__":
     main()
