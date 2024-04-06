@@ -39,6 +39,7 @@ def main(args):
     with open(os.path.join(opt["datasets"]["sample_list_file"]), "r") as f:
         list_ids = f.read().splitlines()
     list_ids = list(set(list_ids))
+    list_ids = [it.replace("Other_dem", "OtherDem") for it in list_ids]
     list_ids.sort()
     cv_func = opt["datasets"]["cv_func"]
     groupby = opt["datasets"]["groupby"]
@@ -66,8 +67,9 @@ def main(args):
                     "EC":"EC", "SUB":"HIPP", "AMY":"AMY", "SACC":"SACC"}
             list_region = [mapping[it.split("_")[2].upper()] for it in list_ids]
             #try:
-            if not opt["datasets"]["name"] in ["berson", "our_only_all"]:
-                list_dataset = [it.split("_")[3] for it in list_ids]
+            if (not "berson" in opt["datasets"]["name"]):
+                if (not "own" in opt["datasets"]["name"]):
+                    list_dataset = [it.split("_")[3] for it in list_ids]
             #except:
             #    print("Wrong Sample_num variable format ")
             #meta["brain_region"] = meta["brain_region"].map(mapping).values
@@ -91,7 +93,7 @@ def main(args):
         raise "Cross validation function not implemented"
     for i, (train_id, test_id) in enumerate(list_splits):
         #if (i<7) and (i>5):
-        #if i>5:
+        #if i>2:
             if (not opt["datasets"]["only_training"]) or (i==0):
                 s_id = np.asarray(list_ids)[test_id].tolist()
                 opt = parse(os.path.join(parent_dir , "train.yml"), is_tain=True)

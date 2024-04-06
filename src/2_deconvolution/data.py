@@ -322,7 +322,7 @@ def prepareData(partition,
         else:
 
             sample_id = mixture["Sample_num"].unique().tolist()
-            sample_id = [it.replace("Other_dem","Other") for it in sample_id]
+            sample_id = [it.replace("Other_dem","OtherDem") for it in sample_id]
             sample_id_test = [it for it in sample_id if (
                                     it in sample_id_test)]
             print("sample test :" +  str(sample_id_test))

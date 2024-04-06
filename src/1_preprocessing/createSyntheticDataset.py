@@ -308,7 +308,11 @@ def main():
         adata_ctrl = adata_ctrl[:, adata_ctrl.var["gene_symbol"].isin(list_genes)]
     adata_ = adata_ctrl
     #adata_.obs.drop("celltype", axis=1, inplace=True)
-    if "lognorm" in name:
+    if "totnorm_lognorm" in name:
+        print("total norm+log norm data")
+        sc.pp.normalize_total(adata_, target_sum=1e4)
+        sc.pp.log1p(adata_)
+    elif ("lognorm" in name) & (not "totnorm_lognorm" in name):
         print("log norm data")
         sc.pp.log1p(adata_)
     print(adata_)
