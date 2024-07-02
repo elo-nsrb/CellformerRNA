@@ -289,19 +289,37 @@ def main():
     nb_cores = int(args.nb_cores)
     print(nb_cores)
     adata_ctrl = ad.read_h5ad(filename)
+    nb_sparse=0
     if "rosmap2" in name:
         adata_ctrl.var["gene_symbol"] = adata_ctrl.var_names.values
         nb_sparse=2
         key = "celltype_map1"
+    elif "berson_map2" in name:
+        key = "celltype_map2"
+        adata_ctrl.obs[key] = adata_ctrl.obs["celltype_map3"].values
+    elif "berson_map3" in name:
+        key = "celltype_map3"
+        adata_ctrl.obs[key] = adata_ctrl.obs[key].replace({"INH-MGE":"INH", "INH-CGE":"INH"})
+    elif "berson_map1" in name:
+        key = "celltype_map1"
+        adata_ctrl.obs[key] = adata_ctrl.obs[key].replace({"ENDO":"Endo-Mural", "Mural":"Endo-Mural"})
+        __import__('ipdb').set_trace()
+    elif "amalia" in name:
+        key = "celltype_amalia"
+    elif "mix" in name:
+        key="celltype"
     elif "pbmc" in name:
         nb_sparse=int(nb_cell_per_case/5)
         key = "celltype"
         celltype = ['B cell', 'CD4+ T cell', 'CD14+ monocyte', 'CD16+ monocyte',
-                       'Cytotoxic T cell', 'Dendritic cell', 'Megakaryocyte']
+                       'Cytotoxic T cell']#, 'Dendritic cell', 'Megakaryocyte']
         adata_ctrl = adata_ctrl[adata_ctrl.obs["celltype"].isin(celltype)]
     else:
         nb_sparse=int(nb_cell_per_case/10)
-        key = "celltype_map1"
+        if "mice" in name:
+            key="celltype"
+        else:
+            key = "celltype_map1"
     #adata_ctrl = adata_ctrl[adata_ctrl.obs.celltype.isin(allow_celltype)]
     if args.list_genes is not None:
         list_genes = pd.read_csv(args.list_genes)["Gene"].tolist()
@@ -315,6 +333,11 @@ def main():
     elif ("lognorm" in name) & (not "totnorm_lognorm" in name):
         print("log norm data")
         sc.pp.log1p(adata_)
+    if "nosparse" in name:
+        with_sparse=False
+        print("No sparse")
+    else:
+        with_sparse=True
     print(adata_)
 
     annot = adata_.var
@@ -335,7 +358,7 @@ def main():
                             nb_sample_per_subject=nb_cell_per_case,
                             sample_size=None,
                             savename=name,
-                            with_sparse=True,
+                            with_sparse=with_sparse,
                             nb_sparse=nb_sparse,
                             num_cores=nb_cores
                             )
@@ -348,11 +371,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
 

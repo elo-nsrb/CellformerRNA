@@ -81,47 +81,88 @@ def get_model(n_inputs, n_outputs):
     model.compile(loss='mse', optimizer='adam')
     return model
 
-def cv_iteration(x_, y_, train_index, test_index, clf_name):
-        start = time.time()
-        X_train, X_test = x_[train_index], x_[test_index]
-        y_train, y_test = y_[train_index], y_[test_index]
+def train_model( X_train, y_train, X_test, y_test, clf_name):
         clf = get_clf(clf_name,
                         n_inputs=X_train.shape[1],
                         n_outputs=y_train.shape[1])
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         #del clf; _=gc.collect()
+        return y_pred, y_test
+
+def cv_iteration(x_, y_, i, train_index, test_index, clf_name, celltypes, groups):
+        start = time.time()
+        X_train, X_test = x_[train_index, :], x_[test_index,:]
+        y_train, y_test = y_[train_index, :, :], y_[test_index, :, :]
+        nb_ = y_.shape[1]
+        out = Parallel(n_jobs=5, verbose=1)(
+                delayed(train_model)(
+                X_train, 
+                y_train[:,i,:], X_test,
+                y_test[:,i,:],
+                clf_name) for i in range(nb_))
+        separate_pred = []
+        label_ = groups[test_index]
+        separates_pred = np.zeros_like(y_test)
+        for j,it in enumerate(out):
+            separates_pred[:,j,:] = it[0]
+
         end = time.time() - start
-        return (y_pred, test_index, end)
+        #separates = np.concatenate(separate_)
+        #separates_pred = np.concatenate(separate_pred)
+        df_metrics_per_subject= compute_metrics_per_subject(separates_pred,
+                            y_test,
+                            celltypes,
+                            label_)
+        df_metrics_per_subject["fold"] = "fold_%s"%str(i)
+        df_metrics_per_subject["time"] =end
+        df_metrics_per_it= compute_metrics(separates_pred,
+                            y_test,
+                            celltypes)
+        df_metrics_per_it["fold"] = "fold_%s"%str(i)
+        df_metrics_per_it["time"] =end
+        df_metrics_per_genes= compute_metrics_per_genes(separates_pred,
+                            y_test,
+                            celltypes,
+                            list(np.arange(separates_pred.shape[-1])))
+        df_metrics_per_genes["fold"] = "fold_%s"%str(i)
+        df_metrics_per_genes["time"] =end
+        return df_metrics_per_subject, df_metrics_per_it, df_metrics_per_genes
 
 
 def multiOut_regression(X, X_gt, groups,
                         clf_name,
+                        celltypes,
                         cv_func="LOGO",
                         K=10):
 
     X_pred = np.zeros_like(X_gt)
     list_times=[]
-    for i in tqdm(range(X_gt.shape[1])):
-        x_ = X
-        y_ = X_gt[:,i,:]
+    df_metrics_sub_list = []
+    df_metrics_it_list = []
+    df_metrics_genes_list = []
+    #for i in tqdm(range(X_gt.shape[1])):
+    x_ = X
+    y_ = X_gt#[:,i,:]
+    if True:
+        #label = celltypes[i]
         if cv_func == "LOO":
             loo = LeaveOneOut()
             list_splits = loo.split(x_)
         elif cv_func == "KStratFold":
             kfold =  StratifiedKFold(n_splits = K,
                                     shuffle=True,
-                                    random_state=1)
+                                    random_state=23)
             list_splits = kfold.split(x_, y_)
         elif cv_func == "KStratGroupFold":
             kfold =  StratifiedGroupKFold(n_splits = K,
                                     shuffle=True,
-                                    random_state=1)
+                                    random_state=23)
             list_splits = kfold.split(x_, y_, groups)
         elif cv_func == "KFold":
             kfold =  KFold(n_splits = K,
                                 shuffle=True,
-                                random_state=1)
+                                random_state=23)
             list_splits = kfold.split(x_, y_)
         elif cv_func == "LOGO":
             logo =  LeaveOneGroupOut()
@@ -135,23 +176,24 @@ def multiOut_regression(X, X_gt, groups,
         #        y_, train_index,
         #        test_index,
         #        clf_name))
-        out = Parallel(n_jobs=1, verbose=1)(
+        out = Parallel(n_jobs=10, verbose=1)(
                 delayed(cv_iteration)(
-                x_,
-                y_, train_index,
+                X,
+                X_gt, i, train_index,
                 test_index,
-                clf_name) for train_index, test_index in list_splits)
+                clf_name, celltypes, groups) for i, (train_index, test_index) in enumerate(list_splits))
         print("training done")
         for j,it in enumerate(out):
+            df_metrics_sub_list.append(it[0])
+            df_metrics_it_list.append(it[1])
+            df_metrics_genes_list.append(it[2])
 
-            X_pred[it[1],i,:] = it[0]
-        #                    n_outputs=y_train.shape[1])
-        #    clf.fit(X_train, y_train)
-            #X_pred[test_index,i,:] = clf.predict(X_test)
-            #end = time.time() - start
-            list_times.append(it[2])
-    mean_time = np.mean(list_times)
-    return X_pred, mean_time
+            #X_pred[it[1],i,:] = it[0]
+    df_metrics_it = pd.concat(df_metrics_it_list)
+    df_metrics_sub = pd.concat(df_metrics_sub_list)
+    df_metrics_genes = pd.concat(df_metrics_genes_list)
+    return df_metrics_it, df_metrics_sub, df_metrics_genes
+
 def multiOut_regression_Comp(X_train, X_gt_train,
                                 groups,
                              X_test, X_gt_test,
@@ -171,7 +213,7 @@ def multiOut_regression_Comp(X_train, X_gt_train,
         elif cv_func == "KStratFold":
             kfold =  StratifiedKFold(n_splits = K,
                                 shuffle=True,
-                                random_state=1)
+                                random_state=23)
             list_splits = kfold.split(x_, y_)
         elif cv_func == "KFold":
             kfold =  KFold(n_splits = K,
@@ -180,7 +222,7 @@ def multiOut_regression_Comp(X_train, X_gt_train,
             list_splits = kfold.split(x_, y_)
         elif cv_func == "KStratGroupFold":
             kfold =  StratifiedGroupKFold(n_splits = K,
-                                shuffle=True, random_state=1)
+                                shuffle=True, random_state=23)
             list_splits = kfold.split(x_, y_, groups)
         elif cv_func == "LOGO":
             logo =  LeaveOneGroupOut()
@@ -232,14 +274,14 @@ def get_clf(clf_name, n_inputs=None, n_outputs=None, n_jobs=1):
         return KNeighborsRegressor()#n_jobs=n_jobs)
     elif clf_name=="RandomForestRegressor":
         return RandomForestRegressor(max_depth=4,
-                                    random_state=2, n_jobs=n_jobs)
+                                    random_state=23, n_jobs=n_jobs)
         #return MultiOutputRegressor(RandomForestRegressor(max_depth=4,
         #                            n_streams=1,
         #                           bootstrap=False,
         #                           n_streams=1,
         #                            random_state=2))
     elif clf_name=="DecisionTree":
-        return DecisionTreeRegressor( random_state=2)
+        return DecisionTreeRegressor( random_state=23)
     elif clf_name=="XGBoost":
         return MultiOutputRegressor(XGBRegressor(
                     objective = 'reg:squarederror'
@@ -282,7 +324,7 @@ def compute_metrics_per_genes(X_pred, X_gt, celltypes,list_genes,
     df_metrics = pd.DataFrame(columns=["celltype", "metrics",
                                     "res", "genes"])
     for met in metrics:
-        out = Parallel(n_jobs=1, verbose=1)(
+        out = Parallel(n_jobs=5, verbose=1)(
                 delayed(get_metrics_par)(
                         X_gt[:,i,j],
                         X_pred[:,i,j],
@@ -383,19 +425,19 @@ def main():
     elif sherlock:
         pp_prefix = "/oak/stanford/scg/lab_tmontine/eloiseb/"
     else:
-        pp_prefix = "/home/eloiseb/"
-    path_save= os.path.join(pp_prefix, "data/rna/save_runs/")
+        pp_prefix = "/remote/home/eloiseb/data/"
+    path_save= os.path.join(pp_prefix, "rna/save_runs/")
     print(path_save)
     key =""
     ctrl_only = False
     with_real_bulk = False
     with_synthetic = True
-    logo = True
-    with_filter = True
+    logo = False
+    with_filter = False
     normalize=True
     groupby = "brain_region"
     sampleid = "Sample_num"
-    savename = path_save + "ML_brain_%s"%key
+    savename = path_save + "ML_universal_%s"%key
     if with_filter:
         savename += "_with_filter_"
     if ctrl_only:
@@ -412,27 +454,33 @@ def main():
 
     print(savename)
     if not os.path.exists(savename + ".csv"):
+    #if True:
         if with_synthetic:
 
             X = np.load(os.path.join(pp_prefix,
-                "data/rna/peak_matrices/pseudobulks_100-800__celltype_specific.npz"))["mat"]
-            inp = pd.read_csv(os.path.join(pp_prefix,
-                "data/rna/peak_matrices/pseudobulks_100-800__pseudobulk_data.csv"))
+                "rna/adata_/pseudobulks_nosparse_celltype_specific.npz"))["mat"]
+                #"data/rna/AD_rna_deconvolution/berson_map2_8k_totnorm_lognorm_nosparse_100-800__celltype_specific.npz"))["mat"]
+            inp = pd.read_parquet(os.path.join(pp_prefix,
+                "rna/adata_/pseudobulks_nosparse_pseudobulk_data.parquet.gzip"))
 
             inp = inp.groupby("Sample_num").sample(nb_samples,
                                         replace=True,
-                                        random_state=1)
+                                        random_state=23)
             print(inp.shape)
             X = X[inp.index.tolist(), :, :]
             genes = inp.drop("Sample_num", axis=1).columns.tolist()
-            celltypes = ["AST", "ENDO", "EXC", "INH", "MIC", "Mural", "OLD",
+            celltypes = ["AST", "Endo-Mural", "EXC-L23","EXC-L4",
+                    "EXC-L5","EXC-L6", "INH-CGE","INH-MGE", "MIC", "OLD",
+                        "OPC"]
+            celltypes = ["AST", "ENDO-Mural", "EXC",
+                     "INH", "MIC", "OLD",
                         "OPC"]
             features = inp.drop("Sample_num", axis=1).columns.tolist()
             sample_list = inp["Sample_num"].values
         else:
             gt = pd.read_csv(pp_prefix + "data/rna/peak_matrices/cellspecificSNRNA_ok.csv")
             inp = pd.read_csv(pp_prefix + "data/rna/peak_matrices/pseudobulkSNRNA_ok.csv")
-            genes = inp.columns.tolist()[1:]
+            genes = inp.drop("Sample_num", axis=1).columns.tolist()
             gt = gt[gt.celltype != "None"]
             #meta = pd.read_csv(path + "metadataSNRNA_rosemap.csv")
             #meta_ctrl = meta[meta["Cognitive Status"] == "NCI"]
@@ -463,17 +511,17 @@ def main():
                     else:
                         X[i, j, :] = gt[(gt.celltype==cc)
                                         &(gt[sampleid] ==it)][features].values
-        meta = pd.read_csv(pp_prefix + "data/rna/peak_matrices/cellinfo.csv")
-        meta["brain_region"] = meta["cell_id"].str.rsplit("_",
-                                        2, expand=True)[2]
-        mapping = {"MTG":"MTG", "CTX":"CTX", "PCTX":"CTX", "DLFC":"CTX",
-                    "Substantia nigra":"SubNI", "Cortex":"CTX",
-                    "DG":"DG","CA1":"CA1", "CA24":"CA24","EC":"EC",
-                    "SUB":"SUB", "amy":"AMY", "sacc":"SACC"}
-        meta["brain_region"] = meta["brain_region"].map(mapping).values
-        meta.drop("cell_type", axis=1, inplace=True)
-        meta.drop("cell_subtype", axis=1, inplace=True)
-        meta = meta[~meta.duplicated()]
+        #meta = pd.read_csv(pp_prefix + "data/rna/peak_matrices/cellinfo.csv")
+        #meta["brain_region"] = meta["cell_id"].str.rsplit("_",
+        #                                2, expand=True)[2]
+        #mapping = {"MTG":"MTG", "CTX":"CTX", "PCTX":"CTX", "DLFC":"CTX",
+        #            "Substantia nigra":"SubNI", "Cortex":"CTX",
+        #            "DG":"DG","CA1":"CA1", "CA24":"CA24","EC":"EC",
+        #            "SUB":"SUB", "amy":"AMY", "sacc":"SACC"}
+        #meta["brain_region"] = meta["brain_region"].map(mapping).values
+        #meta.drop("cell_type", axis=1, inplace=True)
+        #meta.drop("cell_subtype", axis=1, inplace=True)
+        #meta = meta[~meta.duplicated()]
 
         if with_filter:
             mask = pd.read_csv(path_save + "mask_thrs_0.01.csv")
@@ -484,6 +532,7 @@ def main():
         mix = inp.drop(sampleid, axis=1)
         if normalize:
             max_val= np.max(mix,1)
+            max_val[max_val.values<1] = 1
             mix = mix/max_val[:, np.newaxis]
             X = X/max_val[:,np.newaxis, np.newaxis]
             mix = mix.values
@@ -510,7 +559,7 @@ def main():
 
 
     #if True:
-        if True:
+        if not os.path.exists(savename + "_nmf_per_genes.pickle"):
             if with_real_bulk:
                 pred_, m_time = nmf_decomposition(
                                         bulk.drop(sampleid, axis=1),
@@ -537,59 +586,74 @@ def main():
             df_metrics_pr["method"] = "NMF"
             df_metrics_genes["method"] = "NMF"
             df_metrics_pr["time"] = m_time
+            df_metrics_pr.to_pickle(savename + "_nmf_per_sub.pickle")
+            df_metrics_genes.to_pickle(savename + "_nmf_per_genes.pickle")
             print("NMF mean time : " + str(m_time))
+        else:
+            df_metrics_pr = pd.read_pickle(savename + "_nmf_per_sub.pickle")
+            df_metrics_genes = pd.read_pickle(savename + "_nmf_per_genes.pickle")
 
-            list_df.append(df_metrics_pr)
-            list_df_genes.append(df_metrics_genes)
+        list_df.append(df_metrics_pr)
+        list_df_genes.append(df_metrics_genes)
         list_preds = [
                         #"MLP",
                         #"XGBoost",
-                       "RandomForestRegressor",
                 "knn",
+                      # "RandomForestRegressor",
                 "LinearRegression",
                         #"SVM",
-                       # "DecisionTree",
+                       "DecisionTree",
                         ]
         for pr in list_preds:
-            if with_real_bulk:
-                (pred_,
-                 mean_time) = multiOut_regression_Comp(
-                                mix,
-                                X,
-                            sample_list,
-                             bulk.drop(sampleid,axis=1).values,
-                             X,
-                             sample_list,
-                                pr,
-                                K=5,
-                            cv_func=cv_func)
-            else:
-                pred_, mean_time = multiOut_regression(
-                                mix,
-                                        X,
-                                       sample_list,
-                                        pr,
-                                        K=5,
-                                        cv_func=cv_func)
-                if pr == "RandomForestRegressor":
-                    np.save(savename + "pred_RF_nonmask.npy", pred_)
-                    np.save(savename + "gt_RF_nonmask.npy", X)
-                if with_filter:
-                    pred_ = pred_*mask.values[np.newaxis,:,:]
-                    np.save(savename + "pred_RF.npy", pred_)
+            if not os.path.exists(savename + "_%s_per_it.pickle"%pr):
+                if with_real_bulk:
+                    (pred_,
+                     mean_time) = multiOut_regression_Comp(
+                                    mix,
+                                    X,
+                                sample_list,
+                                 bulk.drop(sampleid,axis=1).values,
+                                 X,
+                                 sample_list,
+                                    pr,
+                                    K=5,
+                                cv_func=cv_func)
+                else:
+                    (df_metrics_it, df_metrics_sub,
+                    df_metrics_genes) = multiOut_regression(
+                                    mix,
+                                            X,
+                                           sample_list,
+                                            pr,
+                                            celltypes,
+                                            K=5,
+                                            cv_func=cv_func)
+                    if pr == "RandomForestRegressor":
+                        np.save(savename + "pred_RF_nonmask.npy", pred_)
+                        np.save(savename + "gt_RF_nonmask.npy", X)
+                    if with_filter:
+                        pred_ = pred_*mask.values[np.newaxis,:,:]
+                        np.save(savename + "pred_RF.npy", pred_)
 
-            print(pr + "mean time: " + str(mean_time))
-            df_metrics_pr = compute_metrics_per_subject(pred_,
-                    X, celltypes,sample_list)
-            print("%s compute per genes..."%pr)
-            df_metrics_genes = compute_metrics_per_genes(pred_,
-                                            X, celltypes,
-                                            genes)
-            df_metrics_pr["method"] = pr #+ "pseudobulk"
-            df_metrics_genes["method"] = pr #+ "pseudobulk"
-            df_metrics_pr["time"] = mean_time
-            print(pr + "mean time: " + str(mean_time))
-            list_df.append(df_metrics_pr)
+                #df_metrics_pr = compute_metrics_per_subject(pred_,
+                #        X, celltypes,sample_list)
+                print("%s compute per genes..."%pr)
+                #df_metrics_genes = compute_metrics_per_genes(pred_,
+                #                                X, celltypes,
+                #                                genes)
+                df_metrics_it["method"] = pr #+ "pseudobulk"
+                df_metrics_sub["method"] = pr #+ "pseudobulk"
+                df_metrics_genes["method"] = pr #+ "pseudobulk"
+                #df_metrics_pr["time"] = mean_time
+                #print(pr + "mean time: " + str(mean_time))
+                df_metrics_sub.to_pickle(savename + "_%s_per_sub.pickle"%pr)
+                df_metrics_it.to_pickle(savename + "_%s_per_it.pickle"%pr)
+                df_metrics_genes.to_pickle(savename + "_%s_per_genes.pickle"%pr)
+            else:
+                df_metrics_sub = pd.read_pickle(savename + "_%s_per_sub.pickle"%pr)
+                df_metrics_it = pd.read_pickle(savename + "_%s_per_it.pickle"%pr)
+                df_metrics_genes = pd.read_pickle(savename + "_%s_per_genes.pickle"%pr)
+            list_df.append(df_metrics_sub)
             list_df_genes.append(df_metrics_genes)
         df_metrics_tot = pd.concat(list_df, axis=0)
         df_metrics_tot_genes = pd.concat(list_df_genes, axis=0)
@@ -598,51 +662,77 @@ def main():
     else:
         df_metrics_tot = pd.read_csv(savename + ".csv")
         df_metrics_tot_genes = pd.read_csv(savename + "_genes.csv")
-        df_metrics_tot = df_metrics_tot[df_metrics_tot.method !="knn"]
-    palette = {"RandomForestRegressor":"#004d4b",
-                "knn":"#724600",
-                "LinearRegression":"#df9114",
-                "NMF":"#ffebcf",
+        #df_metrics_tot = df_metrics_tot[df_metrics_tot.method !="LinearRegression"]
+        #df_metrics_tot = df_metrics_tot[df_metrics_tot.method !="knn"]
+    palette = {#"DecisionTree":"#004d4b",
+               # "knn":"#724600",
+                "LinearRegression":"#ebceb1",
+                "NMF":"#88352b",
                 }
-    hue_order=["RandomForestRegressor", "NMF",
+    hue_order=[#"DecisionTree", 
+            "NMF",
+                            #"knn",
                             "LinearRegression",
+                            #"Cellformer"
                             #"knn"
                             ]
     list_df = []
     list_df.append(df_metrics_tot)
     dico_up = {
-            "Cellformer":"/home/eloiseb/stanford_drive/experiences/deconv_rna/sepformer/",
-            "Cellformer_mask":"/home/eloiseb/experiments/deconv_rna/sepformer_ok_data_mask/_with_filter_/"}
+           # "Cellformer":"/remote/home/eloiseb/experiments/deconv_rna/berson_8k_map2_totnorm_lognorm_nosparse/"}
+    "BayesPrism":"/remote/home/eloiseb/data/rna/bayesprism_/",
+            "Cellformer":"/remote/home/eloiseb/experiments/deconv_rna/universal_kfold_totnorm_log_nosparse/",
+    }
+            #"Cellformer_mask":"/home/eloiseb/experiments/deconv_rna/sepformer_ok_data_mask/_with_filter_/"}
     for k,v in dico_up.items():
-        df_met = pd.read_csv(v + "metrics_all_per_sub.csv")
+        df_met = pd.read_csv(v + "metrics_all_sub.csv")
         df_met["method"] = k
         hue_order.append(k)
-        palette[k] = "#800020"
+        palette[k] = "#576169"
         list_df.append(df_met)
     df_metrics_tot = pd.concat(list_df, axis=0)
     df_metrics_tot = df_metrics_tot[~df_metrics_tot.res.isna()]
     list_df = [df_metrics_tot_genes]
     for k,v in dico_up.items():
-        df_met = pd.read_csv(v + "metrics_all_per_genes.csv")
+        df_met = pd.read_csv(v + "metrics_all_genes.csv")
         df_met["method"] = k
         list_df.append(df_met)
     df_metrics_tot_genes = pd.concat(list_df, axis=0)
     df_metrics_tot_genes = df_metrics_tot_genes[~df_metrics_tot_genes.res.isna()]
+    palette["BayesPrism"] = "#eee9de"
 
     df_mse = df_metrics_tot[df_metrics_tot.metrics == "mse"]
-    df_mse["res"] = np.log(df_mse["res"].values)
+   # df_mse["res"] = np.log(df_mse["res"].values)
     df_mse["metrics"] = "log_mse"
-    df_metrics_tot = pd.concat([df_metrics_tot, df_mse])
+    #df_metrics_tot = pd.concat([df_metrics_tot, df_mse])
 
     df_mse = df_metrics_tot_genes[df_metrics_tot_genes.metrics == "mse"]
-    df_mse["res"] = np.log(df_mse["res"].values)
+    #df_mse["res"] = np.log(df_mse["res"].values)
     df_mse["metrics"] = "log_mse"
-    df_metrics_tot_genes = pd.concat([df_metrics_tot_genes, df_mse])
-    metrics = ["spearman", "log_mse"]
+    #df_metrics_tot_genes = pd.concat([df_metrics_tot_genes, df_mse])
+    metrics = ["spearman", "pearson"]
+    pairs=[((it, it), ("Cellformer", "Cellformer")) for it in hue_order if it !="Cellformer"]
+    df_metrics_tot.res = df_metrics_tot.res.astype(float)
+    df_metrics_tot_genes.res = df_metrics_tot_genes.res.astype(float)
+    df_metrics_tot.loc[df_metrics_tot.fold.isna(), "fold"] = 0
+    df_metrics_tot_genes.loc[df_metrics_tot_genes.fold.isna(), "fold"] = 0
+    df_metrics_tot_genes= df_metrics_tot_genes.replace({"ENDO-Mural":"Endo-Mural"})
+    df_metrics_tot= df_metrics_tot.replace({"ENDO-Mural":"Endo-Mural"})
     ###Plot model comparison
     plot_model_comparison(df_metrics_tot,
                         savename,
                         palette,
+                        pairs,
+                        metrics=metrics,
+                        hue_order=hue_order)
+    celltypes = ["AST", "Endo-Mural", "EXC",
+                     "INH", "MIC", "OLD",
+                        "OPC"]
+    pairs=[((cct,it), (cct, "Cellformer")) for it in hue_order if it !="Cellformer" for cct in celltypes]
+    plot_model_comparison_stratified_ct(df_metrics_tot,
+                        savename,
+                        palette,
+                        pairs,
                         metrics=metrics,
                         hue_order=hue_order)
     ###plot celltype
@@ -651,10 +741,11 @@ def main():
                     savename,
                     metrics=metrics,
                     )
-
-    plot_comaprison_per_genes(df_metrics_tot_genes,
+    pairs=[((it, it), ("Cellformer", "Cellformer")) for it in hue_order if it !="Cellformer"]
+    plot_comparison_per_genes(df_metrics_tot_genes,
                             savename,
                             palette,
+                            pairs,
                         metrics=metrics,
                         hue_order=hue_order)
     plot_gene_per_celltype(df_metrics_tot_genes,

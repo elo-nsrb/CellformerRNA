@@ -12,30 +12,23 @@ from pprint import pprint
 import torch.nn as nn
 
 import asteroid
-from asteroid.metrics import get_metrics
-from asteroid.data.librimix_dataset import LibriMix
-from asteroid.data.wsj0_mix import Wsj0mixDataset
-from asteroid.losses import PITLossWrapper, pairwise_neg_sisdr
-from asteroid.losses import *
-
 from asteroid.models import save_publishable
 from asteroid.utils import tensors_to_device
 
-from asteroid.models import DPRNNTasNet
-from my_data import make_dataloader,gatherCelltypes
+from data import make_dataloader,gatherCelltypes
 from sklearn.metrics import balanced_accuracy_score, roc_auc_score, roc_curve, f1_score
 from sklearn.metrics import auc,precision_recall_curve, r2_score
 from sklearn.metrics import mean_squared_error, r2_score
 from scipy.stats import pearsonr
 import seaborn as sns
 import pandas as pd
-from test_functions import *
+#from test_functions import *
 from utils import get_logger, parse #device, 
 from src_ssl.models import *
 from src_ssl.models.sepformer_tasnet import SepFormerTasNet, SepFormer2TasNet
 import sys
 sys.path.append("../")
-from ML_models import *
+#from ML_models import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--parent_dir', default='final.pth.tar',
@@ -79,10 +72,11 @@ def main(args):
     df_metrics_it_list = []
     df_metrics_genes_list = []
     gt_m = None
-    opt_p = parse(args.parent_dir + "train.yml", is_tain=True)
+    opt_p = parse(os.path.join(args.parent_dir, "train.yml"), is_tain=True)
     celltype = opt_p["datasets"]["celltype_to_use"]
     list_files = glob.glob(os.path.join(parent_dir, "exp_kfold_*"))
     for s_id in np.arange(len(list_files)):
+        #s_id=2
         mixtures_all = pd.read_csv(args.peak_count_matrix)#, index_col=0)
        # mixtures_all = mixtures_all.reset_index()
         args.model_path = os.path.join(parent_dir,
@@ -209,9 +203,9 @@ def main(args):
             if args.save:
                 ppp = parent_dir.split("/")[-2]
                 print(ppp)
-                tmp = os.path.join("/home/eloiseb/experiments/deconv_rna/",
-                                    ppp)
-                tmp = os.path.join(tmp,
+                #tmp = os.path.join("/home/eloiseb/experiments/deconv_rna/",
+                #                    ppp)
+                tmp = os.path.join(parent_dir,
                                     "exp_kfold_%s/"%(s_id))
                 np.savez_compressed(os.path.join(tmp,
                                             "predictions_pseudobulk_Test" 

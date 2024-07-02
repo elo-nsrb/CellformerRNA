@@ -62,9 +62,9 @@ def main(args):
             #meta["brain_region"] = meta["cell_id"].str.rsplit("_",
             #                                2, expand=True)[2]
             mapping = {"MTG":"SMTG", "NAC":"NAC", "SMTG":"SMTG", "MFG":"MFG", "CTX":"CTX", "PCTX":"CTX", "DLFC":"CTX",
-                    "SN":"SN", "CORTEX":"CTX", "DG":"HIPP","CA1":"HIPP", "HIPP":"HIPP", "CA24":"HIPP","DLPFC":"CTX",
-                    "SUBSTANTIA NIGRA":"SN", "amy":"AMY", "HPC":"HIPP",
-                    "EC":"EC", "SUB":"HIPP", "AMY":"AMY", "SACC":"SACC"}
+                    "SN":"SN", "CORTEX":"CTX", "DG":"EC-HIPP","CA1":"EC-HIPP", "HIPP":"EC-HIPP", "CA24":"EC-HIPP","DLPFC":"CTX",
+                    "SUBSTANTIA NIGRA":"SN", "amy":"AMY", "HPC":"EC-HIPP",
+                    "EC":"EC-HIPP", "SUB":"EC-HIPP", "AMY":"AMY", "SACC":"SACC"}
             list_region = [mapping[it.split("_")[2].upper()] for it in list_ids]
             #try:
             if (not "berson" in opt["datasets"]["name"]):
@@ -92,8 +92,8 @@ def main(args):
     else:
         raise "Cross validation function not implemented"
     for i, (train_id, test_id) in enumerate(list_splits):
-        #if (i<7) and (i>5):
-        #if i>2:
+        #if (i<3) and (i>1):
+        #if i>5:
             if (not opt["datasets"]["only_training"]) or (i==0):
                 s_id = np.asarray(list_ids)[test_id].tolist()
                 opt = parse(os.path.join(parent_dir , "train.yml"), is_tain=True)
@@ -248,15 +248,15 @@ def main(args):
                             resume_from_checkpoint=resume_from,
                                 #deterministic=True,
                         accelerator="gpu",
-                                devices=3,
+                                devices=2,
                                 )
-                trainer.fit(system)#, ckpt_path=resume_from)
+                trainer.fit(system, ckpt_path=resume_from)
 
                 best_k = {k: v.item() for k, v in checkpoint.best_k_models.items()}
                 with open(os.path.join(args.model_path, "best_k_models.json"), "w") as f:
                         json.dump(best_k, f, indent=0)
 
-                state_dict = torch.load(checkpoint.best_model_path)
+                state_dict = torch.load(checkpoint.best_model_path.replace("test","home"))
                 system.load_state_dict(state_dict=state_dict["state_dict"])
                 system.cpu()
 

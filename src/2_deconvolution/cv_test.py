@@ -71,9 +71,9 @@ def main(args):
             mask = pd.read_csv(opt_p["datasets"]["gene_filtering"])
             mask.set_index("celltype", inplace=True)
     list_files = glob.glob(os.path.join(parent_dir, "exp_kfold_*"))
-    for s_id in np.arange(len(list_files)):
-    #if True:
-    #    s_id=2
+    #for s_id in np.arange(len(list_files)):
+    if True:
+        s_id=2
         args.model_path = os.path.join(parent_dir,
                                     "exp_kfold_%s/"%(s_id))
         print(args.model_path)
@@ -86,8 +86,8 @@ def main(args):
                     args.ckpt_path.split("/")[-1].split(".")[0])
         if not os.path.exists(savedir):
             os.mkdir(savedir)
-        #if True:
-        if not os.path.exists(os.path.join(savedir, "metrics_genes.csv")):
+        if True:
+        #if not os.path.exists(os.path.join(savedir, "metrics_genes.csv")):
             opt = parse(args.model_path + "train.yml", is_tain=True)
             celltypes = opt["datasets"]["celltype_to_use"]
             num_spk = len(celltypes)
@@ -186,13 +186,11 @@ def main(args):
                     name += "_masking_with_input_"
                 if args.save:
                     print("Saving ...")
-                    labels = np.concatenate(label_)
+                    #labels = np.concatenate(label_)
                     ppp = parent_dir.split("/")[-2]
                     print(ppp)
-                    tmp = os.path.join("/home/eloiseb/experiments/deconv_rna/",
-                                        ppp)
-                    tmp = os.path.join(tmp,
-                                        "exp_kfold_%s/"%(s_id))
+                    tmp = savedir #os.path.join(parent_dir,
+                                   #     "exp_kfold_%s/"%(s_id))
                     if not os.path.exists(tmp):
                         os.mkdir(tmp)
                     np.savez_compressed(os.path.join(tmp, "test_predictions_"
@@ -200,7 +198,7 @@ def main(args):
                                         mat=separates_pred)
                     np.savez_compressed(os.path.join(tmp, "label_"
                                                     + name+ ".npz"),
-                                        mat=labels)
+                                        mat=label_)
                     np.savez_compressed(os.path.join(tmp, "test_true_"
                                                     + name+ ".npz"),
                                         mat=separates)
