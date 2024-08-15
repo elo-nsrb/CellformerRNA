@@ -1,7 +1,5 @@
 # Cellformer
-An implementation of cell type-specific RNA deconvolution using Cellformer from our publications:
-
- Berson et al. *"Whole genome deconvolution unveils Alzheimer’s resilient epigenetic signature"*
+An implementation of cell type-specific RNA deconvolution using Cellformer.
 
 ## Installation from source
 The lastest source version of Cellformer can be accessed by running the following command:
@@ -12,14 +10,6 @@ cd Cellformer
 ```
 
 ## Requirements
-
-* Python 3
-* PyTorch (2.0.0)
-* ArchR (R version 4.2.2)
-* Scikit-learn (1.2.2)
-* Asteroid (0.5.2)
-* Pytorch-lightning (2.0.4)
-* comet_ml (3.32.8)
 
 In order to install package dependencies, you will need [Anaconda](https://anaconda.org/). After installing Anaconda, please run the following command to create two conda environnements with R and Pytorch dependencies:
 
@@ -47,18 +37,24 @@ You can find an example of the expected peak matrix format `bulk_countMatrix.txt
 
 ### 3. Model training / finetuning
 
-Cellformer can be trained from scratch using a synthetic dataset and configuration file `train.yml` (see an example in [cellformer](https://github.com/elo-nsrb/Cellformer/tree/main/cellformer)) by running:
+Cellformer can be trained and vallidated from scratch using a synthetic dataset and configuration file `train.yml` (see an example in [cellformer](https://github.com/elo-nsrb/Cellformer/tree/main/cellformer)) by running:
 ```
 conda activate pytorch_env
 python src/2-deconvolution cvTrain.py --parent_dir [model path] --model SepFormerTasNet 
 ```
 
-for finetuning, please run:
+For finetuning, please run:
 
 ```
-python src/2-deconvolution cvTrain.py --parent_dir [model path] --model SepFormerTasNet --reume -resume_ckpt [pretrained model weights]
+python src/2-deconvolution cvTrain.py --parent_dir [model path] --model SepFormerTasNet --resume -resume_ckpt [pretrained model weights]
 ```
 Please modify the path to the data folder in `train.yml`.
+
+## Citation
+- *Berson, E et al.* (2024)
+- *Berson, E. et al.* (2023). **Whole genome deconvolution unveils Alzheimer’s resilient epigenetic signature**. Nature Communications, 14(1) 4947
+[link](https://www.nature.com/articles/s41467-023-40611-4)
+
 
 
 ## Licence
