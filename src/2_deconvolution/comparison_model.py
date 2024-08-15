@@ -417,7 +417,6 @@ def get_metrics_per_subject(X_gt, X_pred, metric):
 
 
 def main():
-    #client = Client(cluster)
     scg = False#True
     sherlock = False
     if scg:
@@ -437,7 +436,7 @@ def main():
     normalize=True
     groupby = "brain_region"
     sampleid = "Sample_num"
-    savename = path_save + "ML_universal_%s"%key
+    savename = path_save + "ML_berson_%s"%key
     if with_filter:
         savename += "_with_filter_"
     if ctrl_only:
@@ -454,14 +453,12 @@ def main():
 
     print(savename)
     if not os.path.exists(savename + ".csv"):
-    #if True:
         if with_synthetic:
 
             X = np.load(os.path.join(pp_prefix,
-                "rna/adata_/pseudobulks_nosparse_celltype_specific.npz"))["mat"]
-                #"data/rna/AD_rna_deconvolution/berson_map2_8k_totnorm_lognorm_nosparse_100-800__celltype_specific.npz"))["mat"]
+                "rna/AD_rna_deconvolution/berson_map1_18k_totnorm_lognorm_nosparse_1inh_100-800__celltype_specific.npz"))["mat"]
             inp = pd.read_parquet(os.path.join(pp_prefix,
-                "rna/adata_/pseudobulks_nosparse_pseudobulk_data.parquet.gzip"))
+                "rna/AD_rna_deconvolution/berson_map1_18k_totnorm_lognorm_nosparse_1inh_100-800__pseudobulk_data.parquet.gzip"))
 
             inp = inp.groupby("Sample_num").sample(nb_samples,
                                         replace=True,
@@ -482,12 +479,6 @@ def main():
             inp = pd.read_csv(pp_prefix + "data/rna/peak_matrices/pseudobulkSNRNA_ok.csv")
             genes = inp.drop("Sample_num", axis=1).columns.tolist()
             gt = gt[gt.celltype != "None"]
-            #meta = pd.read_csv(path + "metadataSNRNA_rosemap.csv")
-            #meta_ctrl = meta[meta["Cognitive Status"] == "NCI"]
-            #bulk = pd.read_csv(path  + "bulk_rosemap.csv")
-            #meta_bulk = pd.read_csv(path  + "META_bulk_rosemap.csv")
-            #meta_bulk = meta_bulk[meta_bulk.individualID.isin(bulk["index"].unique())]
-            #bulk = bulk.rename(columns={"index":sampleid})
             if ctrl_only:
                 gt = gt[gt.individualID.isin(meta_ctrl.individualID)]
                 inp = inp[inp.individualID.isin(meta_ctrl.individualID)]
@@ -511,30 +502,18 @@ def main():
                     else:
                         X[i, j, :] = gt[(gt.celltype==cc)
                                         &(gt[sampleid] ==it)][features].values
-        #meta = pd.read_csv(pp_prefix + "data/rna/peak_matrices/cellinfo.csv")
-        #meta["brain_region"] = meta["cell_id"].str.rsplit("_",
-        #                                2, expand=True)[2]
-        #mapping = {"MTG":"MTG", "CTX":"CTX", "PCTX":"CTX", "DLFC":"CTX",
-        #            "Substantia nigra":"SubNI", "Cortex":"CTX",
-        #            "DG":"DG","CA1":"CA1", "CA24":"CA24","EC":"EC",
-        #            "SUB":"SUB", "amy":"AMY", "sacc":"SACC"}
-        #meta["brain_region"] = meta["brain_region"].map(mapping).values
-        #meta.drop("cell_type", axis=1, inplace=True)
-        #meta.drop("cell_subtype", axis=1, inplace=True)
-        #meta = meta[~meta.duplicated()]
-
         if with_filter:
             mask = pd.read_csv(path_save + "mask_thrs_0.01.csv")
             mask.set_index("celltype", inplace=True)
             #mask = mask[features]
             mask = mask.loc[celltypes]
-            X = X*mask.values[np.newaxis,:,:]
+            X = X*np.asarray(mask.values)[np.newaxis,:,:]
         mix = inp.drop(sampleid, axis=1)
         if normalize:
             max_val= np.max(mix,1)
             max_val[max_val.values<1] = 1
-            mix = mix/max_val[:, np.newaxis]
-            X = X/max_val[:,np.newaxis, np.newaxis]
+            mix = mix/np.asarray(max_val)[:, np.newaxis]
+            X = X/np.asarray(max_val)[:,np.newaxis, np.newaxis]
             mix = mix.values
 
 
@@ -596,13 +575,7 @@ def main():
         list_df.append(df_metrics_pr)
         list_df_genes.append(df_metrics_genes)
         list_preds = [
-                        #"MLP",
-                        #"XGBoost",
-                "knn",
-                      # "RandomForestRegressor",
                 "LinearRegression",
-                        #"SVM",
-                       "DecisionTree",
                         ]
         for pr in list_preds:
             if not os.path.exists(savename + "_%s_per_it.pickle"%pr):
@@ -662,25 +635,16 @@ def main():
     else:
         df_metrics_tot = pd.read_csv(savename + ".csv")
         df_metrics_tot_genes = pd.read_csv(savename + "_genes.csv")
-        #df_metrics_tot = df_metrics_tot[df_metrics_tot.method !="LinearRegression"]
-        #df_metrics_tot = df_metrics_tot[df_metrics_tot.method !="knn"]
-    palette = {#"DecisionTree":"#004d4b",
-               # "knn":"#724600",
+    palette = {
                 "LinearRegression":"#ebceb1",
                 "NMF":"#88352b",
                 }
-    hue_order=[#"DecisionTree", 
-            "NMF",
-                            #"knn",
-                            "LinearRegression",
-                            #"Cellformer"
-                            #"knn"
-                            ]
+    hue_order=[ "NMF", "LinearRegression", ]
     list_df = []
     list_df.append(df_metrics_tot)
     dico_up = {
            # "Cellformer":"/remote/home/eloiseb/experiments/deconv_rna/berson_8k_map2_totnorm_lognorm_nosparse/"}
-    "BayesPrism":"/remote/home/eloiseb/data/rna/bayesprism_/",
+    "BayesPrism":"/remote/home/eloiseb/data/rna/bayesprism_/berson_",
             "Cellformer":"/remote/home/eloiseb/experiments/deconv_rna/universal_kfold_totnorm_log_nosparse/",
     }
             #"Cellformer_mask":"/home/eloiseb/experiments/deconv_rna/sepformer_ok_data_mask/_with_filter_/"}

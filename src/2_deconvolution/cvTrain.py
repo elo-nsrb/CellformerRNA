@@ -93,7 +93,7 @@ def main(args):
         raise "Cross validation function not implemented"
     for i, (train_id, test_id) in enumerate(list_splits):
         #if (i<3) and (i>1):
-        #if i>5:
+        #if i>2:
             if (not opt["datasets"]["only_training"]) or (i==0):
                 s_id = np.asarray(list_ids)[test_id].tolist()
                 opt = parse(os.path.join(parent_dir , "train.yml"), is_tain=True)
