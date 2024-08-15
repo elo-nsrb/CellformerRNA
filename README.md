@@ -26,7 +26,7 @@ python src/1-preprocessing/createSyntheticDataset.py --savepath [path_data] --fi
 
 
 ### 2. Pretrained model inference and bulk deconvolution
-We provided the pretrained model used in the manuscript in [cellformer](https://github.com/elo-nsrb/Cellformer/tree/main/cellformer). The pretrained model can be used to deconvolute bulk matrix by running:
+We provided the pretrained model used in the manuscript in [Model_universal](https://github.com/elo-nsrb/CellformerRNA/tree/main/Model_universal/). The pretrained model can be used to deconvolute bulk matrix by running:
 
 ```
 conda activate pytorch_env
@@ -37,7 +37,7 @@ You can find an example of the expected bulk matrix format `bulk_countMatrix.txt
 
 ### 3. Model training / finetuning
 
-Cellformer can be trained and vallidated from scratch using a synthetic dataset and configuration file `train.yml` (see an example in [cellformer](https://github.com/elo-nsrb/Cellformer/tree/main/cellformer)) by running:
+Cellformer can be trained and vallidated from scratch using a synthetic dataset and configuration file `train.yml` (see an example in [Model_universal](https://github.com/elo-nsrb/CellformerRNA/tree/main/Model_universal/)) by running:
 ```
 conda activate pytorch_env
 python src/2-deconvolution cvTrain.py --parent_dir [model path] --model SepFormerTasNet 
