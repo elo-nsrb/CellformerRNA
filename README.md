@@ -30,10 +30,10 @@ We provided the pretrained model used in the manuscript in [cellformer](https://
 
 ```
 conda activate pytorch_env
-python src/2-deconvolution/cv_inference --parent_dir [model path] --gene_count_matrix [gene expression matrix] --type bulk --save
+python src/2-deconvolution/cv_inference --parent_dir Model_universal --gene_count_matrix [gene expression matrix] --type bulk --save
 ```
 
-You can find an example of the expected peak matrix format `bulk_countMatrix.txt` in [data](https://github.com/elo-nsrb/Cellformer/tree/main/data).
+You can find an example of the expected bulk matrix format `bulk_countMatrix.txt` in [data](https://github.com/elo-nsrb/Cellformer/tree/main/data). It must have a column name 'Sample_num' and the same genes in the same order as in .
 
 ### 3. Model training / finetuning
 
