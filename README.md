@@ -33,7 +33,7 @@ conda activate pytorch_env
 python src/2-deconvolution/cv_inference --parent_dir Model_universal --gene_count_matrix [gene expression matrix] --type bulk --save
 ```
 
-You can find an example of the expected bulk matrix format `bulk_countMatrix.txt` in [data](https://github.com/elo-nsrb/Cellformer/tree/main/data). It must have a column name 'Sample_num' and the same genes in the same order as in .
+You can find an example of the expected bulk matrix format `bulk_countMatrix.txt` in [data](https://github.com/elo-nsrb/Cellformer/tree/main/data). It must have a column name 'Sample_num' and the same genes in the same order as in this [file](https://github.com/elo-nsrb/CellformerRNA/tree/main/Model_universal/input_genes.csv).
 
 ### 3. Model training / finetuning
 
