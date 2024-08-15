@@ -1,0 +1,91 @@
+datasets:
+  add_pure: false
+  binarize: false
+  binarize_input: false
+  celltype_to_use:
+  - AST
+  - ENDO-Mural
+  - EXC
+  - INH
+  - MIC
+  - OLD
+  - OPC
+  celltypes:
+  - AST
+  - ENDO-Mural
+  - EXC
+  - INH
+  - MIC
+  - OLD
+  - OPC
+  cut_val: 0.2
+  dataset_dir: /remote/home/eloiseb/data/rna/adata_/
+  sample_list_file: /remote/home/eloiseb/data/rna/adata_/pseudobulks__nosparse_list_samples.txt
+    #gene_filtering: /home/eloiseb/data/rna/adata_/mask_thrs_0.01.csv
+  fs: 1
+  hdf_dir: /remote/home/eloiseb/experiments/deconv_rna//hdf_region/
+  holdout: true
+  cv_func: kfold
+  groupby: ""
+  k: 5
+  name: pseudobulks_nosparse
+  normalize: false
+  normalizeMax: true
+  num_workers: 1
+  offset_input: 1
+  only_training: true
+  ratio: false
+  ratio_input: false
+  sample_id_test: ''
+  sample_id_val: null
+filterbank:
+  kernel_size: 16
+  n_filters: 256
+  stride: 8
+gpu_ids:
+- 0
+- 1
+- 2
+is_train: true
+masknet:
+    n_src: 7
+    bidirectional: true
+    chunk_size: 250
+    dropout: 0
+    ff_activation: relu
+    ff_hid: 256
+    hop_size: 125
+    n_repeats: 1
+    in_chan: 256
+    mask_act: relu
+    norm_type: gLN
+    out_chan: 256
+name: SepTasNet
+optim:
+  lr: 0.001
+  optimizer: adam
+  weight_decay: 0.0
+optimizer_kwargs:
+  lr: 0.001
+  weight_decay: 1.0e-05
+positional arguments: {}
+resume:
+  path: ./
+  resume_state: false
+scheduler:
+  d_model: 64
+  noam_scale: 0.2
+  steps_per_epoch: 10000
+training:
+  accumulate_grad_batches: 3
+  batch_size: 30
+  comet: false
+  early_stop: false
+  max_epochs: 400
+  gradient_clipping: 5
+  half_lr: true
+  loss: mse
+  num_workers: 8
+  patience: 100
+  save_epochs: 1
+  weights: None
