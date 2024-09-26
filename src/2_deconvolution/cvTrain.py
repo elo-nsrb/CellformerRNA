@@ -248,7 +248,7 @@ def main(args):
                             resume_from_checkpoint=resume_from,
                                 #deterministic=True,
                         accelerator="gpu",
-                                devices=2,
+                                devices=1,
                                 )
                 trainer.fit(system, ckpt_path=resume_from)
 

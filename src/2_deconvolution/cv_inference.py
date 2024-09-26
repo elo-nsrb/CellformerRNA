@@ -34,7 +34,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--parent_dir', default='final.pth.tar',
                     help='Location to save best validation model')
 parser.add_argument("--model", default="ConvTasNet", choices=["ConvTasNet", "DPRNNTasNet", "DPTNet", "SepFormerTasNet", "SepFormer2TasNet", "FC_MOR", "NL_MOR"])
-parser.add_argument('--peak_count_matrix', type=str,
+parser.add_argument('--gene_count_matrix', type=str,
                         help='Bulk sample')
 
 parser.add_argument('--type', type=str,
@@ -77,7 +77,7 @@ def main(args):
     list_files = glob.glob(os.path.join(parent_dir, "exp_kfold_*"))
     for s_id in np.arange(len(list_files)):
         #s_id=2
-        mixtures_all = pd.read_csv(args.peak_count_matrix)#, index_col=0)
+        mixtures_all = pd.read_csv(args.gene_count_matrix)#, index_col=0)
        # mixtures_all = mixtures_all.reset_index()
         args.model_path = os.path.join(parent_dir,
                                     "exp_kfold_%s/"%(s_id))
@@ -96,13 +96,13 @@ def main(args):
             mask = pd.read_csv(opt_p["datasets"]["gene_filtering"])
             mask.set_index("celltype", inplace=True)
         if args.type == "bulk":
-            mixtures = pd.read_csv(args.peak_count_matrix)#, sep="\t",header=1)
+            mixtures = pd.read_csv(args.gene_count_matrix)#, sep="\t",header=1)
             mixtures.rename({"Unnamed: 0":"Sample_num"}, axis=1, inplace=True)
-            savedir += "/bulk_sample_decon_%s/"%args.peak_count_matrix.split("/")[-1].split(".")[0]
+            savedir += "/bulk_sample_decon_%s/"%args.gene_count_matrix.split("/")[-1].split(".")[0]
             if not os.path.exists(savedir):
                 os.mkdir(savedir)
         elif args.type == "pseudobulk":
-                mixtures_all = pd.read_csv(args.peak_count_matrix, index_col=0)
+                mixtures_all = pd.read_csv(args.gene_count_matrix, index_col=0)
                 mixtures_all = mixtures_all.reset_index()
         opt = parse(args.model_path + "train.yml", is_tain=True)
         sample_id_test = opt["datasets"]["sample_id_test"]

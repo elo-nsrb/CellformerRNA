@@ -117,7 +117,7 @@ def plot_model_comparison(df_metrics_tot,
                            order=hue_order,
                                 )
         annotator.configure(test='Mann-Whitney',  text_format="star", 
-                           loc='inside', fontsize="20", 
+                           loc='inside', fontsize=8, 
                            comparisons_correction="BH")
         annotator.apply_and_annotate()
         ax.legend("")
@@ -138,7 +138,13 @@ def plot_model_comparison(df_metrics_tot,
                     horizontalalignment='center',
                     size='x-small',color='black',weight='semibold')
         ax.set_xlabel("")
-        ax.set_title(it)
+        if it =="pearson":
+            title = "Pearson"
+        elif it =="spearman":
+            title = "Spearman"
+        else:
+            title=it
+        ax.set_title(title)
         ax.set_ylabel("")
         ax.tick_params(axis="both", labelsize=20)
         ax.legend().remove()
@@ -213,7 +219,13 @@ def plot_model_comparison_stratified_ct(df_metrics_tot,
        #             horizontalalignment='center',
        #             size='x-small',color='black',weight='semibold')
         ax.set_xlabel("")
-        ax.set_title(it)
+        if it =="pearson":
+            title = "Pearson"
+        elif it =="spearman":
+            title = "Spearman"
+        else:
+            title=it
+        ax.set_title(title)
         ax.set_ylabel("")
         ax.tick_params(axis="both", labelsize=20)
         ax.legend().remove()
@@ -286,8 +298,16 @@ def plot_comparison_per_genes(df_metrics_tot_genes,
                     means.loc[lab], 
                     horizontalalignment='center',
                     size='x-small',color='black',weight='semibold')
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=90, fontsize=fontsize)
         ax.set_xlabel("")
-        ax.set_title(it)
+        if it =="pearson":
+            title = "Pearson"
+        elif it =="spearman":
+            title = "Spearman"
+        else:
+            title=it
+        ax.set_title(title)
+        ax.tick_params(axis="both", labelsize=20)
         ax.set_ylabel("")
     plt.savefig(savename + "box_comp_CV_per_genes.svg",
                 bbox_inches="tight")

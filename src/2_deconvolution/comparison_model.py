@@ -436,7 +436,7 @@ def main():
     normalize=True
     groupby = "brain_region"
     sampleid = "Sample_num"
-    savename = path_save + "ML_berson_%s"%key
+    savename = path_save + "ML_univeral_20_%s"%key
     if with_filter:
         savename += "_with_filter_"
     if ctrl_only:
@@ -444,7 +444,7 @@ def main():
     elif with_real_bulk:
         savename = path_save + "Test_real_bulk_brain_%s"%key
     elif with_synthetic:
-        nb_samples=10
+        nb_samples=20
         savename += "_with_synthetic_%s_"%str(nb_samples)
     if normalize:
         savename += "_normalize_"
@@ -456,9 +456,10 @@ def main():
         if with_synthetic:
 
             X = np.load(os.path.join(pp_prefix,
-                "rna/AD_rna_deconvolution/berson_map1_18k_totnorm_lognorm_nosparse_1inh_100-800__celltype_specific.npz"))["mat"]
+                #"rna/AD_rna_deconvolution/berson_map1_18k_totnorm_lognorm_nosparse_1inh_100-800__celltype_specific.npz"))["mat"]
+                "rna/adata_/pseudobulks_nosparse_celltype_specific.npz"))["mat"]
             inp = pd.read_parquet(os.path.join(pp_prefix,
-                "rna/AD_rna_deconvolution/berson_map1_18k_totnorm_lognorm_nosparse_1inh_100-800__pseudobulk_data.parquet.gzip"))
+                "rna/adata_/pseudobulks_nosparse_pseudobulk_data.parquet.gzip"))
 
             inp = inp.groupby("Sample_num").sample(nb_samples,
                                         replace=True,
@@ -636,15 +637,16 @@ def main():
         df_metrics_tot = pd.read_csv(savename + ".csv")
         df_metrics_tot_genes = pd.read_csv(savename + "_genes.csv")
     palette = {
-                "LinearRegression":"#ebceb1",
-                "NMF":"#88352b",
+                "LinearRegression":"#AB6859",
+                "NMF":"#AD3F25", #""#88352b",
                 }
     hue_order=[ "NMF", "LinearRegression", ]
     list_df = []
     list_df.append(df_metrics_tot)
     dico_up = {
            # "Cellformer":"/remote/home/eloiseb/experiments/deconv_rna/berson_8k_map2_totnorm_lognorm_nosparse/"}
-    "BayesPrism":"/remote/home/eloiseb/data/rna/bayesprism_/berson_",
+    "BayesPrism":"/remote/home/eloiseb/data/rna/bayesprism_/",
+    "CIBERSORTx":"/home/eloiseb/data/rna/cibersort/cibersortx_",
             "Cellformer":"/remote/home/eloiseb/experiments/deconv_rna/universal_kfold_totnorm_log_nosparse/",
     }
             #"Cellformer_mask":"/home/eloiseb/experiments/deconv_rna/sepformer_ok_data_mask/_with_filter_/"}
@@ -663,7 +665,9 @@ def main():
         list_df.append(df_met)
     df_metrics_tot_genes = pd.concat(list_df, axis=0)
     df_metrics_tot_genes = df_metrics_tot_genes[~df_metrics_tot_genes.res.isna()]
-    palette["BayesPrism"] = "#eee9de"
+    df_metrics_tot_genes = df_metrics_tot_genes[df_metrics_tot_genes.res!=0]
+    palette["BayesPrism"] = "#EBAFA1"
+    palette["CIBERSORTx"] = "#eee9de"
 
     df_mse = df_metrics_tot[df_metrics_tot.metrics == "mse"]
    # df_mse["res"] = np.log(df_mse["res"].values)
@@ -674,7 +678,7 @@ def main():
     #df_mse["res"] = np.log(df_mse["res"].values)
     df_mse["metrics"] = "log_mse"
     #df_metrics_tot_genes = pd.concat([df_metrics_tot_genes, df_mse])
-    metrics = ["spearman", "pearson"]
+    metrics = ["pearson","spearman", ]
     pairs=[((it, it), ("Cellformer", "Cellformer")) for it in hue_order if it !="Cellformer"]
     df_metrics_tot.res = df_metrics_tot.res.astype(float)
     df_metrics_tot_genes.res = df_metrics_tot_genes.res.astype(float)
