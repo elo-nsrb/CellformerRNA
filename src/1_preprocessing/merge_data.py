@@ -22,23 +22,23 @@ parser.add_argument('--list_genes', default="./",
 
 #def main():
 
-list_dataset = ["abi_mtg_ad_7",
-                "abi_mtg_ctl_7",
+list_dataset = ["abi_mtg_ad_7_totnorm_lognorm_nosparse_100-800_",
+                "abi_mtg_ctl_7_totnorm_lognorm_nosparse_100-800_",
                 #"abi_ctx",
-                "rosmap2_f5_7",
-                "berson_7",
-                "mathys_7",
+                "rosmap2_f5_7_totnorm_lognorm_nosparse_100-800_",
+                "berson_7_totnorm_lognorm_nosparse_100-800_",
+                "mathys_7_totnorm_lognorm_nosparse_100-800_",
                 #"rosemap",
-                "agarwal_7",
-                "franjic_7",
-                "tran_7"]
+                "agarwal_7_totnorm_lognorm_nosparse_100-800_",
+                "franjic_7_totnorm_lognorm_nosparse_100-800_",
+                "tran_7_totnorm_lognorm_nosparse_100-800_"]
 
-name = "_small_7"
+name = "totnorm_lognorm_nosparse"
 suff_pseudo = "_pseudobulk_data.parquet.gzip"
 suff_ct_spe = "_celltype_specific.npz"
 suff_annotations = "_annotations.csv"
-path_data = "/home/eloiseb/data/rna/adata_/"
-save_path_data = "/home/eloiseb/data/rna/adata_/"
+path_data = "/remote/test/eloiseb/data/rna/adata_/"
+save_path_data = "/remote/test/eloiseb/data/rna/adata_/"
 
 df_pseudo = []
 for it in list_dataset:
@@ -48,7 +48,7 @@ for it in list_dataset:
 
 df_pseudo = pd.concat(df_pseudo)
 list_samples = df_pseudo["Sample_num"].unique().tolist()
-with open(os.path.join(path_data, "pseudobulks_list_samples.txt"), "w") as f:
+with open(os.path.join(path_data, "pseudobulks_" +name+ "_list_samples.txt"), "w") as f:
     for it in list_samples:
         f.write("%s\n"%str(it))
 df_pseudo.to_parquet(os.path.join(save_path_data, "pseudobulks" +name+ suff_pseudo), index=None, compression="gzip")

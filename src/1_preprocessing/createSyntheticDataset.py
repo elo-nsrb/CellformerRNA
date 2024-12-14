@@ -303,9 +303,10 @@ def main():
     elif "berson_map1" in name:
         key = "celltype_map1"
         adata_ctrl.obs[key] = adata_ctrl.obs[key].replace({"ENDO":"Endo-Mural", "Mural":"Endo-Mural"})
-        __import__('ipdb').set_trace()
     elif "amalia" in name:
         key = "celltype_amalia"
+        adata_ctrl.obs[key] = adata_ctrl.obs[key].replace({"ENDO":"Endo-Mural", "Mural":"Endo-Mural",
+            "EXC-HIPP":"EXC", "Cortical":"EXC", "Inhib":"INH", "Micro":"MIC", "Astro":"AST", "Oligo":"OLD"})
     elif "mix" in name:
         key="celltype"
     elif "pbmc" in name:
@@ -318,6 +319,12 @@ def main():
         nb_sparse=int(nb_cell_per_case/10)
         if "mice" in name:
             key="celltype"
+            adata_ctrl.obs[key] = adata_ctrl.obs[key].replace({"ENDO":"Endo-Mural", "Mural":"Endo-Mural",
+                "EXC-HIPP":"EXC", "CA1":"EXC", "DG":"EXC","CA2-3":"EXC",
+                "Cortical":"EXC", "Inhib":"INH", "Micro":"MIC", "Astro":"AST", "Oligo":"OLD"})
+            adata_ctrl = adata_ctrl[adata_ctrl.obs.treatment !="KA25"]
+            print(adata_ctrl.obs[key].sort_values().unique().tolist())
+            __import__('ipdb').set_trace()
         else:
             key = "celltype_map1"
     #adata_ctrl = adata_ctrl[adata_ctrl.obs.celltype.isin(allow_celltype)]
