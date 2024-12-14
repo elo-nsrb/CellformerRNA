@@ -12,6 +12,8 @@ from pprint import pprint
 import torch.nn as nn
 
 import asteroid
+from asteroid.metrics import get_metrics
+from asteroid.losses import *
 from asteroid.models import save_publishable
 from asteroid.utils import tensors_to_device
 
@@ -23,7 +25,7 @@ from scipy.stats import pearsonr
 import seaborn as sns
 import pandas as pd
 #from test_functions import *
-from utils import get_logger, parse #device, 
+from utils import get_logger, parse #device,
 from src_ssl.models import *
 from src_ssl.models.sepformer_tasnet import SepFormerTasNet, SepFormer2TasNet
 import sys
@@ -121,7 +123,7 @@ def main(args):
                 os.mkdir(savedir)
         label_ = mixtures.Sample_num.tolist()
         print("Savedir : " + savedir)
-    
+
 
         # all resulting files would be saved in eval_save_dir
         eval_save_dir = os.path.join(args.model_path, args.out_dir)
@@ -159,7 +161,7 @@ def main(args):
             series_list = []
 
             with torch.no_grad():
-                mix = mixtures.drop("Sample_num", 
+                mix = mixtures.drop("Sample_num",
                                         axis=1).values.astype(
                                              np.float32)
                 if opt['datasets']["normalizeMax"]:
@@ -185,11 +187,11 @@ def main(args):
                     os.mkdir(tmp)
                 #np.savez_compressed(os.path.join(args.model_path,
                 np.savez_compressed(os.path.join(tmp,
-                                            "predictions_pseudobulk_Test_no_filt" 
+                                            "predictions_pseudobulk_Test_no_filt"
                                                 + ".npz"),
                                     mat=est_sources_np)
                 np.savez_compressed(os.path.join(tmp,
-                                            "labels_Test" 
+                                            "labels_Test"
                                                 + ".npz"),
                                     mat=np.asarray(label_))
             if ("gene_filtering" in opt_p["datasets"]) and not (opt_p["datasets"]["gene_filtering"] is None):
@@ -208,10 +210,10 @@ def main(args):
                 tmp = os.path.join(parent_dir,
                                     "exp_kfold_%s/"%(s_id))
                 np.savez_compressed(os.path.join(tmp,
-                                            "predictions_pseudobulk_Test" 
+                                            "predictions_pseudobulk_Test"
                                                 + ".npz"),
                                     mat=separates_pred)
-        
+
 
         if args.groundtruth is not None:
             print(savedir)
@@ -235,21 +237,21 @@ def main(args):
             if ("gene_filtering" in opt_p["datasets"]) and not (opt_p["datasets"]["gene_filtering"] is None):
                 separates = separates#*mask.values[np.newaxis, :,:]
             if separates.shape[0]>1:
-                df_metrics_per_subject= compute_metrics_per_subject(separates_pred, 
-                                    separates, 
+                df_metrics_per_subject= compute_metrics_per_subject(separates_pred,
+                                    separates,
                                     celltypes,
-                                    label_) 
+                                    label_)
                 df_metrics_per_subject["fold"] = "fold_%s"%str(s_id)
-                df_metrics_per_it= compute_metrics(separates_pred, 
-                                    separates, 
+                df_metrics_per_it= compute_metrics(separates_pred,
+                                    separates,
                                     celltypes)
                 df_metrics_per_it["fold"] = "fold_%s"%str(s_id)
-                df_metrics_per_genes= compute_metrics_per_genes(separates_pred, 
-                                    separates, 
+                df_metrics_per_genes= compute_metrics_per_genes(separates_pred,
+                                    separates,
                                     celltypes,
-                                    list(np.arange(separates.shape[-1]))) 
+                                    list(np.arange(separates.shape[-1])))
                 df_metrics_per_genes["fold"] = "fold_%s"%str(s_id)
-                #mixtures = pd.DataFrame 
+                #mixtures = pd.DataFrame
             df_metrics_per_subject.to_csv(os.path.join(savedir, "metrics_per_subjects.csv"))
             df_metrics_per_it.to_csv(os.path.join(savedir, "metrics_per_it.csv"))
             df_metrics_sub_list.append(df_metrics_per_subject)
@@ -262,15 +264,15 @@ def main(args):
             if not os.path.exists(args.parent_dir):
                 os.mkdir(args.parent_dir)
         df_metrics = pd.concat(df_metrics_it_list)
-        df_metrics.to_csv(os.path.join(args.parent_dir, 
+        df_metrics.to_csv(os.path.join(args.parent_dir,
                             "PSEUDOBULK_metrics_all_per_it.csv"),
                         index=None)
         df_metrics = pd.concat(df_metrics_sub_list)
-        df_metrics.to_csv(os.path.join(args.parent_dir, 
+        df_metrics.to_csv(os.path.join(args.parent_dir,
                             "PSEUDOBULK_metrics_all_per_sub.csv"),
                         index=None)
         df_metrics = pd.concat(df_metrics_genes_list)
-        df_metrics.to_csv(os.path.join(args.parent_dir, 
+        df_metrics.to_csv(os.path.join(args.parent_dir,
                             "PSEUDOBULK_metrics_all_per_genes.csv"),
                         index=None)
         __import__('ipdb').set_trace()
